@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1">
+    <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="dark-theme">
     <div id="mercury-opening">
@@ -27,7 +27,7 @@
             stroke-dasharray="722" stroke-dashoffset="722" id="mercury-radar-circle"/>
         </svg>
         <!-- REPLACE: patch video src -->
-        <video id="mercury-patch" src="" autoplay muted playsinline loop></video>
+        <video id="mercury-patch" src="assets/ambiance_RENDEZVOUS.mp4" autoplay muted playsinline loop></video>
         <span id="mercury-version"></span>
       </div>
     </div>
@@ -38,7 +38,7 @@
       <div class="ps-card">
         <div class="ps-header">
           <!-- REPLACE: patch image src -->
-          <img class="ps-app-patch" src="" alt="" />
+          <img class="ps-app-patch" src="assets/patch_RENDEZVOUS-removebg-preview.png" alt="" />
           <div class="ps-app-name">RENDEZVOUS</div>
           <div class="ps-title">QUI SE CONNECTE ?</div>
         </div>
@@ -71,7 +71,7 @@
         <header class="top-bar">
             <div class="top-bar-brand">
                 <!-- REPLACE: patch -->
-                <img class="app-patch-header" src="" alt="" />
+                <img class="app-patch-header" src="assets/patch_RENDEZVOUS-removebg-preview.png" alt="" />
                 <h1>RENDEZVOUS</h1>
             </div>
             <nav class="top-bar-nav">
@@ -87,7 +87,79 @@
         </header>
         <main class="main-content">
             <div id="mainView" class="view active">
-                <p style="color: var(--text-secondary); font-family: 'Lato', sans-serif; text-transform: uppercase; letter-spacing: 0.1em;">PORTAIL EN CONSTRUCTION</p>
+                <div class="vitrine-container" style="text-transform: uppercase;">
+                    <section class="vitrine-hero">
+                        <img class="vitrine-patch" src="assets/patch_RENDEZVOUS-removebg-preview.png" alt="" />
+                        <h2>La Tranquility Suite</h2>
+                        <p class="vitrine-subtitle">Hic omnia incipiunt</p>
+                        <p class="vitrine-description">Un écosystème d'outils internes conçu pour la Cellule Vidéo de L'Étudiant. Chaque outil répond à un besoin précis de production, de post-production ou d'organisation.</p>
+                        <button type="button" class="vitrine-cta" onclick="showProfileSelector()">SE CONNECTER / DEMANDER L'ACCÈS</button>
+                    </section>
+                    <section class="vitrine-fleet">
+                        <h3>La Flotte</h3>
+                        <div class="fleet-grid">
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">BackUpFlow</div>
+                            <div class="fleet-card-mission">Sauvegarde automatique des projets de montage vers les serveurs.</div>
+                            <div class="fleet-card-status status-available">DISPONIBLE</div>
+                        </div>
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">Transporter</div>
+                            <div class="fleet-card-mission">Export et livraison des fichiers vidéo vers les destinations définies.</div>
+                            <div class="fleet-card-status status-available">DISPONIBLE</div>
+                        </div>
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">Reviewer</div>
+                            <div class="fleet-card-mission">Validation collaborative des rushs et des montages en ligne.</div>
+                            <div class="fleet-card-status status-available">DISPONIBLE</div>
+                        </div>
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">Manifest</div>
+                            <div class="fleet-card-mission">Gestion des manifestes de livraison et suivi des exports.</div>
+                            <div class="fleet-card-status status-available">DISPONIBLE</div>
+                        </div>
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">ARK</div>
+                            <div class="fleet-card-mission">Archivage structuré des projets vidéo terminés.</div>
+                            <div class="fleet-card-status status-available">DISPONIBLE</div>
+                        </div>
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">ROVER</div>
+                            <div class="fleet-card-mission">Téléchargement et organisation des médias depuis les plateformes.</div>
+                            <div class="fleet-card-status status-available">DISPONIBLE</div>
+                        </div>
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">COVENANT</div>
+                            <div class="fleet-card-mission">Gestion des droits et autorisations de diffusion en tournage.</div>
+                            <div class="fleet-card-status status-available">DISPONIBLE</div>
+                        </div>
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">Launcher</div>
+                            <div class="fleet-card-mission">Agent de fond — maintien de la session et de l'identité dans la suite.</div>
+                            <div class="fleet-card-status status-reserved">RÉSERVÉ N1</div>
+                        </div>
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">READBACK</div>
+                            <div class="fleet-card-mission">Relecture et correction des sous-titres générés automatiquement.</div>
+                            <div class="fleet-card-status status-planned">EN PROJET</div>
+                        </div>
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">CAPITAL</div>
+                            <div class="fleet-card-mission">Gestion des ressources et du matériel de la cellule.</div>
+                            <div class="fleet-card-status status-planned">EN PROJET</div>
+                        </div>
+                        <div class="fleet-card">
+                            <div class="fleet-card-name">PAYLOAD</div>
+                            <div class="fleet-card-mission">Publication et distribution des vidéos sur les plateformes cibles.</div>
+                            <div class="fleet-card-status status-planned">EN PROJET</div>
+                        </div>
+                        </div>
+                    </section>
+                    <section class="vitrine-footer">
+                        <p class="vitrine-footer-title">RENDEZVOUS EST LE PORTAIL OFFICIEL DE LA TRANQUILITY SUITE — CELLULE VIDÉO L'ÉTUDIANT</p>
+                        <p class="vitrine-footer-sub">Accès réservé aux collaborateurs de L'Étudiant</p>
+                    </section>
+                </div>
             </div>
         </main>
     </div>
@@ -154,6 +226,6 @@
     </div>
     -->
 
-    <script src="app.js?v=1"></script>
+    <script src="app.js?v=2"></script>
 </body>
 </html>

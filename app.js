@@ -185,8 +185,20 @@ const WebProfileSelector = (() => {
   return { init, show, hide, changeProfile, onSessionReady: null };
 })();
 
-window.onMercuryComplete = function() {
+function showVitrine() {
+  WebProfileSelector.hide();
+  switchView('main');
+}
+
+function showProfileSelector() {
   WebProfileSelector.init();
+}
+
+window.onMercuryComplete = function() {
+  // A1 : afficher la vitrine publique d'abord
+  const appContainer = document.querySelector('.app-container');
+  if (appContainer) appContainer.classList.add('ready');
+  showVitrine();
 };
 
 function showNotification(message) {

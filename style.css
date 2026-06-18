@@ -1148,3 +1148,208 @@ input[type="search"] {
     padding: 24px;
   }
 }
+
+/* ============================================
+   VITRINE PUBLIQUE — RENDEZVOUS
+   ============================================ */
+
+.vitrine-container {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 60px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+}
+
+.vitrine-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+}
+
+.vitrine-patch {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 8px;
+}
+
+.vitrine-hero h2 {
+  font-family: 'Lato', sans-serif;
+  font-size: 2em;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.vitrine-subtitle {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.75em;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.vitrine-description {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.95em;
+  color: var(--text-secondary);
+  max-width: 560px;
+  line-height: 1.7;
+  text-transform: none !important;
+}
+
+.vitrine-cta {
+  margin-top: 8px;
+  padding: 14px 36px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8em;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.vitrine-cta:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+.vitrine-fleet {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.vitrine-fleet h3 {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.7em;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.fleet-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: var(--transition);
+}
+
+.fleet-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.fleet-card-name {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8em;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.fleet-card-mission {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8em;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  flex: 1;
+  text-transform: none;
+}
+
+.fleet-card-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.65em;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+
+.status-available {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.status-reserved {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.status-planned {
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border);
+}
+
+.vitrine-footer {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border);
+}
+
+.vitrine-footer-title {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.65em;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.vitrine-footer-sub {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.7em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 768px) {
+  .vitrine-container {
+    padding: 40px 20px;
+    gap: 60px;
+  }
+
+  .fleet-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vitrine-hero h2 {
+    font-size: 1.5em;
+  }
+}
