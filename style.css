@@ -400,7 +400,7 @@ input[type="search"] {
 }
 
 .web-app .main-content {
-  overflow: hidden;
+  overflow-y: auto;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -409,13 +409,11 @@ input[type="search"] {
 }
 
 .web-app .main-content > .view.active {
-  height: 100%;
-  max-height: 100%;
+  min-height: 100%;
   padding: 0;
   max-width: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 
 /* ============================================
@@ -1221,11 +1219,13 @@ input[type="search"] {
   color: #fff;
   cursor: pointer;
   transition: var(--transition);
+  box-shadow: var(--shadow);
 }
 
 .vitrine-cta:hover {
   background: var(--accent-hover);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .vitrine-fleet {
