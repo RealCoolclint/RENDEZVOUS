@@ -254,3 +254,93 @@ function switchView(viewName) {
 //     });
 //   });
 // });
+
+// ============================================================
+// R3 — INSCRIPTION
+// ============================================================
+
+function scrollToInscription() {
+  const section = document.getElementById('section-inscription');
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function toggleRgpdNotice() {
+  const notice = document.getElementById('rgpd-notice');
+  if (!notice) return;
+  const isHidden = notice.hasAttribute('hidden');
+  if (isHidden) {
+    notice.removeAttribute('hidden');
+  } else {
+    notice.setAttribute('hidden', '');
+  }
+}
+
+function _updateSubmitBtn() {
+  const btn = document.getElementById('inscription-submit');
+  if (!btn) return;
+  const prenom   = (document.getElementById('insc-prenom')?.value || '').trim();
+  const nom      = (document.getElementById('insc-nom')?.value || '').trim();
+  const email    = (document.getElementById('insc-email')?.value || '').trim();
+  const role     = (document.getElementById('insc-role')?.value || '').trim();
+  const lien     = (document.getElementById('insc-lien-video')?.value || '').trim();
+  const rgpd     = document.getElementById('insc-rgpd')?.checked;
+  const emailOk  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  btn.disabled = !(prenom && nom && email && emailOk && role && lien && rgpd);
+}
+
+function soumettreInscription() {
+  const btn = document.getElementById('inscription-submit');
+  if (btn && btn.disabled) return;
+
+  const prenom = (document.getElementById('insc-prenom')?.value || '').trim();
+  const nom    = (document.getElementById('insc-nom')?.value || '').trim();
+  const email  = (document.getElementById('insc-email')?.value || '').trim();
+  const role   = (document.getElementById('insc-role')?.value || '').trim();
+  const lien   = (document.getElementById('insc-lien-video')?.value || '').trim();
+
+  // Stockage temporaire localStorage — sera remplacé par appel proxy en R4
+  const demande = {
+    prenom, nom, email, role, lienVideo: lien,
+    rgpdAccepte: true,
+    rgpdTimestamp: new Date().toISOString(),
+    statut: 'pending',
+    soumisLe: new Date().toISOString()
+  };
+  localStorage.setItem('ts_inscription_pending', JSON.stringify(demande));
+
+  // Basculer vers l'état confirmation
+  const formWrap = document.getElementById('inscription-form-wrap');
+  const confirmation = document.getElementById('inscription-confirmation');
+  if (formWrap) formWrap.setAttribute('hidden', '');
+  if (confirmation) confirmation.removeAttribute('hidden');
+}
+
+// Activation dynamique du bouton submit — écoute tous les champs
+document.addEventListener('DOMContentLoaded', function() {
+  const champs = ['insc-prenom', 'insc-nom', 'insc-email', 'insc-role', 'insc-lien-video'];
+  champs.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', _updateSubmitBtn);
+  });
+  const rgpd = document.getElementById('insc-rgpd');
+  if (rgpd) rgpd.addEventListener('change', _updateSubmitBtn);
+
+  // Accessibilité — lien RGPD : remplacement du span par un bouton inline
+  const rgpdLink = document.querySelector('.rgpd-link');
+  if (rgpdLink && rgpdLink.tagName === 'SPAN') {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'rgpd-link';
+    btn.textContent = rgpdLink.textContent;
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', 'rgpd-notice');
+    btn.onclick = function() {
+      toggleRgpdNotice();
+      const expanded = document.getElementById('rgpd-notice')?.hasAttribute('hidden') ? 'false' : 'true';
+      btn.setAttribute('aria-expanded', expanded);
+    };
+    rgpdLink.parentNode.replaceChild(btn, rgpdLink);
+  }
+});

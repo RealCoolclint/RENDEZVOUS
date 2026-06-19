@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body class="dark-theme">
     <div id="mercury-opening">
@@ -93,7 +93,10 @@
                         <h2>La Tranquility Suite</h2>
                         <p class="vitrine-subtitle">OMNIA IN ORDINE</p>
                         <p class="vitrine-description">Un écosystème d'outils internes conçu pour la Cellule Vidéo de L'Étudiant. Chaque outil répond à un besoin précis de production, de post-production ou d'organisation.</p>
-                        <button type="button" class="vitrine-cta" onclick="showProfileSelector()">SE CONNECTER / DEMANDER L'ACCÈS</button>
+                        <div class="vitrine-cta-group">
+                            <button type="button" class="vitrine-cta-primary" onclick="showProfileSelector()">SE CONNECTER</button>
+                            <button type="button" class="vitrine-cta-secondary" onclick="scrollToInscription()">S'INSCRIRE</button>
+                        </div>
                     </section>
                     <section class="vitrine-fleet">
                         <h3>La Flotte</h3>
@@ -153,6 +156,60 @@
                             <div class="fleet-card-mission">Publication et distribution des vidéos sur les plateformes cibles.</div>
                             <div class="fleet-card-status status-planned">EN PROJET</div>
                         </div>
+                        </div>
+                    </section>
+                    <section class="vitrine-inscription" id="section-inscription">
+                        <h3>DEMANDER L'ACCÈS</h3>
+                        <p class="vitrine-inscription-intro">Remplis ce formulaire pour rejoindre la Tranquility Suite. Ta demande sera examinée et tu recevras une confirmation par email.</p>
+
+                        <div id="inscription-form-wrap">
+                            <div class="inscription-form">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="insc-prenom">PRÉNOM</label>
+                                        <input type="text" id="insc-prenom" class="input" placeholder="Ton prénom" autocomplete="given-name" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="insc-nom">NOM</label>
+                                        <input type="text" id="insc-nom" class="input" placeholder="Ton nom" autocomplete="family-name" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="insc-email">EMAIL PROFESSIONNEL</label>
+                                        <input type="email" id="insc-email" class="input" placeholder="prenom.nom@letudiant.fr" autocomplete="email" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="insc-role">RÔLE DANS L'ENTREPRISE</label>
+                                        <input type="text" id="insc-role" class="input" placeholder="Ex : journaliste vidéo, chef de rubrique..." />
+                                    </div>
+                                </div>
+                                <div class="form-group form-group-full">
+                                    <label for="insc-lien-video">TON LIEN AVEC LA VIDÉO</label>
+                                    <input type="text" id="insc-lien-video" class="input" placeholder="Ex : je tourne 2 sujets par semaine, je valide les montages..." />
+                                </div>
+                                <div class="inscription-rgpd">
+                                    <label class="rgpd-label">
+                                        <input type="checkbox" id="insc-rgpd" class="rgpd-checkbox" />
+                                        <span class="rgpd-text">J'ai pris connaissance de la <span class="rgpd-link" onclick="toggleRgpdNotice()">notice d'information RGPD</span> et j'accepte que mes données soient utilisées pour la gestion de mon accès à la Tranquility Suite.</span>
+                                    </label>
+                                    <div class="rgpd-notice" id="rgpd-notice" hidden>
+                                        <p>Responsable du traitement : Martin Pavloff — mpavloff@letudiant.fr</p>
+                                        <p>Finalité : gestion des accès à la Tranquility Suite (outils internes de la Cellule Vidéo L'Étudiant).</p>
+                                        <p>Base légale : intérêt légitime de l'employeur.</p>
+                                        <p>Données collectées : prénom, nom, email professionnel, rôle, lien avec la vidéo.</p>
+                                        <p>Conservation : durée d'activité dans la suite + suppression à désactivation.</p>
+                                        <p>Droits : accès, rectification, effacement sur demande à mpavloff@letudiant.fr.</p>
+                                    </div>
+                                </div>
+                                <button type="button" class="inscription-submit-btn" id="inscription-submit" disabled onclick="soumettreInscription()">ENVOYER MA DEMANDE</button>
+                            </div>
+                        </div>
+
+                        <div id="inscription-confirmation" hidden>
+                            <div class="inscription-confirmation-card">
+                                <div class="confirmation-icon">OK</div>
+                                <div class="confirmation-title">DEMANDE ENVOYÉE</div>
+                                <div class="confirmation-text">Ta demande a bien été reçue. Martin reviendra vers toi par email sous 48h.</div>
+                            </div>
                         </div>
                     </section>
                     <section class="vitrine-footer">

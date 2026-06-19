@@ -117,17 +117,7 @@
 }
 
 .dark-theme {
-  --accent: var(--color-primary);
-  --accent-hover: var(--color-primary-light);
-  --accent-light: var(--color-primary-dark);
-  --success: var(--color-primary);
-  --success-light: var(--color-primary-dark);
-  --danger: var(--color-primary-dark);
-  --danger-light: var(--color-dark-lighter);
-  --warning: var(--color-primary);
-  --warning-light: var(--color-dark-lighter);
-  --info: var(--color-primary);
-  --info-light: var(--color-dark-lighter);
+  /* accent, success, warning, danger — valeurs héritées de :root */
   --border: rgba(255, 255, 255, 0.1);
   --border-light: rgba(255, 255, 255, 0.05);
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
@@ -1351,5 +1341,296 @@ input[type="search"] {
 
   .vitrine-hero h2 {
     font-size: 1.5em;
+  }
+}
+
+/* ============================================
+   VITRINE — DOUBLE CTA HERO
+   ============================================ */
+
+.vitrine-cta-group {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.vitrine-cta-primary,
+.vitrine-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 210px;
+  padding: 14px 36px;
+  border-width: 1.5px;
+  border-style: solid;
+  border-radius: var(--radius);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.85em;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: none;
+}
+
+.vitrine-cta-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.vitrine-cta-secondary {
+  background-color: var(--bg-secondary);
+  background: var(--bg-secondary);
+  -webkit-appearance: none;
+  appearance: none;
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+.vitrine-cta-primary:hover,
+.vitrine-cta-secondary:hover {
+  transform: translateY(-2px);
+}
+
+.vitrine-cta-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.vitrine-cta-secondary:hover {
+  background-color: var(--bg-secondary);
+  background: var(--bg-secondary);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ============================================
+   VITRINE — SECTION INSCRIPTION
+   ============================================ */
+
+.vitrine-inscription {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.vitrine-inscription h3 {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.7em;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.vitrine-inscription-intro {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  text-transform: none;
+  max-width: 560px;
+}
+
+/* ============================================
+   FORMULAIRE INSCRIPTION
+   ============================================ */
+
+.inscription-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 720px;
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.inscription-rgpd {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.rgpd-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  text-transform: none;
+}
+
+.rgpd-checkbox {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.rgpd-text {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.82em;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  text-transform: none;
+}
+
+.rgpd-link {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: none;
+  font-family: 'Lato', sans-serif;
+  font-size: inherit;
+  font-weight: inherit;
+  padding: 0;
+  display: inline;
+}
+
+.rgpd-link:hover {
+  color: var(--accent-hover);
+}
+
+.rgpd-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-top: 4px;
+}
+
+.rgpd-notice p {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.78em;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  text-transform: none;
+}
+
+.rgpd-notice[hidden] {
+  display: none;
+}
+
+.inscription-submit-btn {
+  align-self: flex-start;
+  padding: 14px 36px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8em;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+
+.inscription-submit-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.inscription-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================================
+   CONFIRMATION POST-ENVOI
+   ============================================ */
+
+.inscription-confirmation-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 32px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  max-width: 480px;
+}
+
+.confirmation-icon {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.7em;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--success);
+  border: 1.5px solid var(--success);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+}
+
+.confirmation-title {
+  font-family: 'Lato', sans-serif;
+  font-size: 1em;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.confirmation-text {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  text-transform: none;
+}
+
+#inscription-confirmation[hidden] {
+  display: none;
+}
+
+/* ============================================
+   RESPONSIVE INSCRIPTION
+   ============================================ */
+
+@media (max-width: 768px) {
+  .vitrine-cta-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .vitrine-cta-primary,
+  .vitrine-cta-secondary {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .inscription-form {
+    max-width: 100%;
+  }
+
+  .inscription-submit-btn {
+    align-self: stretch;
+    text-align: center;
   }
 }
