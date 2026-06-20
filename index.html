@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=17">
 </head>
 <body class="dark-theme">
     <div id="mercury-opening">
@@ -33,38 +33,45 @@
     </div>
     <div id="mercury-flash"></div>
 
-    <div id="profile-selector-screen">
-      <div id="ps-offline-badge" class="ps-offline-badge" hidden>HORS LIGNE</div>
-      <div class="ps-card">
-        <div class="ps-header">
-          <!-- REPLACE: patch image src -->
-          <img class="ps-app-patch" src="assets/patch_TRANQUILITY.png" alt="TRANQUILITY SUITE" />
-          <div class="ps-app-name">TRANQUILITY SUITE</div>
-          <div class="ps-title">QUI SE CONNECTE ?</div>
-        </div>
-        <div id="ps-profiles-grid" class="ps-profiles-grid"></div>
-        <div id="ps-empty-state" class="ps-empty-state" hidden>
-          <p>Aucun profil disponible.<br>Vérifiez votre connexion Internet.</p>
-        </div>
-        <div class="ps-duration-section">
-          <div class="ps-duration-label">RESTER CONNECTÉ :</div>
-          <div class="ps-duration-options">
-            <label class="ps-duration-option">
-              <input type="radio" name="ps-duration" value="today" />
-              <span class="ps-duration-btn">AUJOURD'HUI</span>
-            </label>
-            <label class="ps-duration-option">
-              <input type="radio" name="ps-duration" value="7days" checked />
-              <span class="ps-duration-btn">7 JOURS</span>
-            </label>
-            <label class="ps-duration-option">
-              <input type="radio" name="ps-duration" value="always" />
-              <span class="ps-duration-btn">TOUJOURS</span>
-            </label>
-          </div>
-        </div>
-        <button id="ps-connect-btn" class="ps-connect-btn" disabled>SE CONNECTER</button>
-      </div>
+    <div id="connect-drawer" class="glass-drawer glass-drawer--left" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="connect-title">
+        <button type="button" class="glass-drawer-backdrop" aria-label="Fermer la connexion" onclick="closeConnect()"></button>
+        <div class="glass-drawer-bloom" aria-hidden="true"></div>
+        <aside class="glass-drawer-panel">
+            <header class="glass-drawer-header">
+                <div class="glass-drawer-header-text">
+                    <p class="glass-drawer-eyebrow">Cellule Vidéo L'Étudiant</p>
+                    <h2 id="connect-title">Se connecter</h2>
+                </div>
+                <div class="glass-drawer-header-actions">
+                    <div id="ps-offline-badge" class="ps-offline-badge ps-offline-badge--drawer" hidden>HORS LIGNE</div>
+                    <button type="button" class="glass-drawer-close" onclick="closeConnect()" aria-label="Retour à la vitrine">FERMER</button>
+                </div>
+            </header>
+            <div class="glass-drawer-body connect-drawer-body">
+                <div id="ps-profiles-grid" class="ps-profiles-grid"></div>
+                <div id="ps-empty-state" class="ps-empty-state" hidden>
+                    <p>Aucun profil disponible.<br>Vérifiez votre connexion Internet.</p>
+                </div>
+                <div class="ps-duration-section">
+                    <div class="ps-duration-label">RESTER CONNECTÉ</div>
+                    <div class="ps-duration-options">
+                        <label class="ps-duration-option">
+                            <input type="radio" name="ps-duration" value="today" />
+                            <span class="ps-duration-btn">AUJOURD'HUI</span>
+                        </label>
+                        <label class="ps-duration-option">
+                            <input type="radio" name="ps-duration" value="7days" checked />
+                            <span class="ps-duration-btn">7 JOURS</span>
+                        </label>
+                        <label class="ps-duration-option">
+                            <input type="radio" name="ps-duration" value="always" />
+                            <span class="ps-duration-btn">TOUJOURS</span>
+                        </label>
+                    </div>
+                </div>
+                <button type="button" id="ps-connect-btn" class="ps-connect-btn ps-connect-btn--drawer" disabled>SE CONNECTER</button>
+            </div>
+        </aside>
     </div>
 
     <div class="app-container web-app">
@@ -94,8 +101,8 @@
                         <p class="vitrine-subtitle">OMNIA IN ORDINE</p>
                         <p class="vitrine-description">Un écosystème d'outils internes conçu pour la Cellule Vidéo de L'Étudiant. Chaque outil répond à un besoin précis de production, de post-production ou d'organisation.</p>
                         <div class="vitrine-cta-group">
-                            <button type="button" class="vitrine-cta-primary" onclick="showProfileSelector()">SE CONNECTER</button>
-                            <button type="button" class="vitrine-cta-secondary" onclick="scrollToInscription()">S'INSCRIRE</button>
+                            <button type="button" id="connect-trigger" class="vitrine-cta-primary" onclick="showProfileSelector(this)">SE CONNECTER</button>
+                            <button type="button" id="inscription-trigger" class="vitrine-cta-secondary" onclick="openInscription(this)">S'INSCRIRE</button>
                         </div>
                     </section>
                     <section class="vitrine-fleet">
@@ -158,60 +165,6 @@
                         </div>
                         </div>
                     </section>
-                    <section class="vitrine-inscription" id="section-inscription">
-                        <h3>DEMANDER L'ACCÈS</h3>
-                        <p class="vitrine-inscription-intro">Remplis ce formulaire pour rejoindre la Tranquility Suite. Ta demande sera examinée et tu recevras une confirmation par email.</p>
-
-                        <div id="inscription-form-wrap">
-                            <div class="inscription-form">
-                                <div class="form-grid">
-                                    <div class="form-group">
-                                        <label for="insc-prenom">PRÉNOM</label>
-                                        <input type="text" id="insc-prenom" class="input" placeholder="Ton prénom" autocomplete="given-name" />
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="insc-nom">NOM</label>
-                                        <input type="text" id="insc-nom" class="input" placeholder="Ton nom" autocomplete="family-name" />
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="insc-email">EMAIL PROFESSIONNEL</label>
-                                        <input type="email" id="insc-email" class="input" placeholder="prenom.nom@letudiant.fr" autocomplete="email" />
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="insc-role">RÔLE DANS L'ENTREPRISE</label>
-                                        <input type="text" id="insc-role" class="input" placeholder="Ex : journaliste vidéo, chef de rubrique..." />
-                                    </div>
-                                </div>
-                                <div class="form-group form-group-full">
-                                    <label for="insc-lien-video">TON LIEN AVEC LA VIDÉO</label>
-                                    <input type="text" id="insc-lien-video" class="input" placeholder="Ex : je tourne 2 sujets par semaine, je valide les montages..." />
-                                </div>
-                                <div class="inscription-rgpd">
-                                    <label class="rgpd-label">
-                                        <input type="checkbox" id="insc-rgpd" class="rgpd-checkbox" />
-                                        <span class="rgpd-text">J'ai pris connaissance de la <span class="rgpd-link" onclick="toggleRgpdNotice()">notice d'information RGPD</span> et j'accepte que mes données soient utilisées pour la gestion de mon accès à la Tranquility Suite.</span>
-                                    </label>
-                                    <div class="rgpd-notice" id="rgpd-notice" hidden>
-                                        <p>Responsable du traitement : Martin Pavloff — mpavloff@letudiant.fr</p>
-                                        <p>Finalité : gestion des accès à la Tranquility Suite (outils internes de la Cellule Vidéo L'Étudiant).</p>
-                                        <p>Base légale : intérêt légitime de l'employeur.</p>
-                                        <p>Données collectées : prénom, nom, email professionnel, rôle, lien avec la vidéo.</p>
-                                        <p>Conservation : durée d'activité dans la suite + suppression à désactivation.</p>
-                                        <p>Droits : accès, rectification, effacement sur demande à mpavloff@letudiant.fr.</p>
-                                    </div>
-                                </div>
-                                <button type="button" class="inscription-submit-btn" id="inscription-submit" disabled onclick="soumettreInscription()">ENVOYER MA DEMANDE</button>
-                            </div>
-                        </div>
-
-                        <div id="inscription-confirmation" hidden>
-                            <div class="inscription-confirmation-card">
-                                <div class="confirmation-icon">OK</div>
-                                <div class="confirmation-title">DEMANDE ENVOYÉE</div>
-                                <div class="confirmation-text">Ta demande a bien été reçue. Martin reviendra vers toi par email sous 48h.</div>
-                            </div>
-                        </div>
-                    </section>
                     <section class="vitrine-footer">
                         <p class="vitrine-footer-title">TRANQUILITY SUITE — CELLULE VIDÉO L'ÉTUDIANT</p>
                         <p class="vitrine-footer-sub">Accès réservé aux collaborateurs de L'Étudiant</p>
@@ -221,8 +174,90 @@
         </main>
     </div>
 
+    <div id="inscription-drawer" class="glass-drawer glass-drawer--right" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="inscription-title">
+        <button type="button" class="glass-drawer-backdrop" aria-label="Fermer le formulaire" onclick="closeInscription()"></button>
+        <div class="glass-drawer-bloom" aria-hidden="true"></div>
+        <aside class="glass-drawer-panel">
+            <header class="glass-drawer-header">
+                <div class="glass-drawer-header-text">
+                    <p class="glass-drawer-eyebrow">Cellule Vidéo L'Étudiant</p>
+                    <h2 id="inscription-title">Demander l'accès</h2>
+                </div>
+                <button type="button" class="glass-drawer-close" onclick="closeInscription()" aria-label="Retour à la vitrine">FERMER</button>
+            </header>
+            <div class="glass-drawer-body inscription-drawer-body">
+                <div id="inscription-form-wrap">
+                    <div class="inscription-form inscription-form--compact">
+                        <div class="form-grid form-grid--compact">
+                            <div class="form-group">
+                                <label for="insc-prenom">PRÉNOM</label>
+                                <input type="text" id="insc-prenom" class="input input--compact" placeholder="Prénom" autocomplete="given-name" />
+                            </div>
+                            <div class="form-group">
+                                <label for="insc-nom">NOM</label>
+                                <input type="text" id="insc-nom" class="input input--compact" placeholder="Nom" autocomplete="family-name" />
+                            </div>
+                            <div class="form-group">
+                                <label for="insc-email">EMAIL PRO</label>
+                                <input type="email" id="insc-email" class="input input--compact" placeholder="prenom.nom@letudiant.fr" autocomplete="email" />
+                            </div>
+                            <div class="form-group">
+                                <label for="insc-role">RÔLE</label>
+                                <input type="text" id="insc-role" class="input input--compact" placeholder="Journaliste vidéo…" />
+                            </div>
+                            <div class="form-group form-group-full">
+                                <label for="insc-lien-video">LIEN VIDÉO</label>
+                                <input type="text" id="insc-lien-video" class="input input--compact" placeholder="Ex : 2 sujets/semaine…" />
+                            </div>
+                        </div>
+                        <label class="inscription-rgpd-inline">
+                            <input type="checkbox" id="insc-rgpd" class="rgpd-checkbox" />
+                            <span class="rgpd-text">J'accepte la <button type="button" class="rgpd-link" id="rgpd-open-btn">notice RGPD</button>.</span>
+                        </label>
+                        <button type="button" class="inscription-submit-btn inscription-submit-btn--full" id="inscription-submit" disabled onclick="soumettreInscription()">ENVOYER MA DEMANDE</button>
+                    </div>
+                </div>
+
+                <div id="inscription-rgpd-view" class="glass-drawer-rgpd-view" hidden>
+                    <p class="glass-drawer-rgpd-lead">Notice d'information — gestion des accès Tranquility Suite.</p>
+                    <ul class="glass-drawer-rgpd-list">
+                        <li>Responsable : Martin Pavloff — mpavloff@letudiant.fr</li>
+                        <li>Données : prénom, nom, email pro, rôle, lien vidéo.</li>
+                        <li>Finalité : gestion des accès internes Cellule Vidéo.</li>
+                        <li>Conservation : durée d'activité + suppression à désactivation.</li>
+                        <li>Droits : accès, rectification, effacement sur demande.</li>
+                    </ul>
+                    <button type="button" class="glass-drawer-rgpd-back" onclick="closeRgpdNotice()">RETOUR AU FORMULAIRE</button>
+                </div>
+
+                <div id="inscription-confirmation" hidden>
+                    <div class="inscription-confirmation-card">
+                        <div class="confirmation-icon">OK</div>
+                        <div class="confirmation-title">DEMANDE ENVOYÉE</div>
+                        <div class="confirmation-text">Ta demande a bien été reçue. Martin reviendra vers toi par email sous 48h.</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
     <script>
     (function() {
+      const ALREADY_PLAYED_KEY = 'ts_mercury_played';
+      if (sessionStorage.getItem(ALREADY_PLAYED_KEY)) {
+        const opening = document.getElementById('mercury-opening');
+        if (opening) opening.style.display = 'none';
+        if (typeof window.onMercuryComplete === 'function') {
+          window.onMercuryComplete();
+        } else {
+          window.addEventListener('DOMContentLoaded', function() {
+            if (typeof window.onMercuryComplete === 'function') window.onMercuryComplete();
+          });
+        }
+        return;
+      }
+      sessionStorage.setItem(ALREADY_PLAYED_KEY, '1');
+
       const opening = document.getElementById('mercury-opening');
       const versionEl = document.getElementById('mercury-version');
       const radarCircle = document.getElementById('mercury-radar-circle');
@@ -283,6 +318,8 @@
     </div>
     -->
 
-    <script src="app.js?v=3"></script>
+    <script src="glass-drawer.js?v=7"></script>
+    <script src="app.js?v=6"></script>
+    <script src="inscription.js?v=7"></script>
 </body>
 </html>
