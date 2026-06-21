@@ -52,9 +52,9 @@
 
   /* Sidebar / top-bar */
   --topbar-bg: var(--bg-secondary);
-  --sidebar-text:        var(--text-primary);
-  --sidebar-text-hover:  var(--text-primary);
-  --sidebar-border:      var(--border);
+  --topbar-text:        var(--text-primary);
+  --topbar-text-hover:  var(--text-primary);
+  --topbar-border:      var(--border);
 }
 
 .dark-theme {
@@ -66,9 +66,6 @@
   --text-secondary: #94a3b8;
   --text-tertiary: #8896aa;
   --border:        rgba(255, 255, 255, 0.1);
-  --sidebar-text:      #f8fafc;
-  --sidebar-text-hover: #f8fafc;
-  --sidebar-border:    rgba(255, 255, 255, 0.1);
 }
 
 .dark-theme,
@@ -91,13 +88,6 @@
 .dark-theme label,
 .dark-theme .btn {
   color: #ffffff;
-}
-
-.dark-theme .review-sidebar .review-section,
-.dark-theme .comments-block .notes-list,
-.dark-theme .note-item,
-.dark-theme .empty-note {
-  background-color: #1e293b !important;
 }
 
 .empty-note {
@@ -127,9 +117,6 @@
   --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
   --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-  --sidebar-text: #ffffff;
-  --sidebar-text-hover: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
 }
 
 /* ============================================
@@ -708,11 +695,11 @@ body:not(.glass-drawer-open) .app-container {
   min-height: 80px;
   height: auto;
   background: var(--topbar-bg);
-  color: var(--sidebar-text);
+  color: var(--topbar-text);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--sidebar-border);
+  border-bottom: 1px solid var(--topbar-border);
   -webkit-app-region: no-drag;
   position: relative;
   z-index: 1002;
@@ -741,7 +728,7 @@ body:not(.glass-drawer-open) .app-container {
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--sidebar-text);
+  color: var(--topbar-text);
   margin: 0;
 }
 
@@ -759,7 +746,7 @@ body:not(.glass-drawer-open) .app-container {
   padding: 10px 20px;
   background: transparent;
   border: none;
-  color: var(--sidebar-text);
+  color: var(--topbar-text);
   cursor: pointer;
   transition: all var(--transition);
   font-size: 0.75em;
@@ -795,7 +782,7 @@ body:not(.glass-drawer-open) .app-container {
 }
 
 .nav-btn:hover {
-  color: var(--sidebar-text-hover);
+  color: var(--topbar-text-hover);
 }
 
 .nav-btn:hover::before {
