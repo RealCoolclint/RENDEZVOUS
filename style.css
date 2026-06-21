@@ -39,32 +39,9 @@
   color: #ffffff;
   border-color: rgba(255,255,255,0.3);
 }
-.dark-theme .comments-title,
-.dark-theme .empty-note,
-.dark-theme .note-item,
-.dark-theme .note-timecode,
-.dark-theme .note-text,
 .dark-theme label,
 .dark-theme .btn {
   color: #ffffff;
-}
-
-.empty-note {
-  font-style: normal !important;
-}
-
-.dark-theme .note-item {
-  border-color: rgba(255,255,255,0.1);
-}
-
-.dark-theme .note-timecode {
-  background-color: #0f172a !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255,255,255,0.2);
-}
-.dark-theme .note-timecode.segment-timecode {
-  background-color: rgba(255, 87, 34, 0.25) !important;
-  color: #ffab91 !important;
 }
 
 /* ============================================
