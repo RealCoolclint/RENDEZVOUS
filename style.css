@@ -795,7 +795,7 @@ body:not(.glass-drawer-open) .app-container {
   transform: translateX(-50%);
   width: 0;
   height: 2px;
-  background: var(--color-primary);
+  background: var(--accent);
   transition: width var(--transition);
 }
 
@@ -808,7 +808,7 @@ body:not(.glass-drawer-open) .app-container {
 }
 
 .nav-btn.active {
-  color: var(--color-primary);
+  color: var(--accent);
   font-weight: 900;
 }
 
@@ -1951,39 +1951,6 @@ body:not(.glass-drawer-open) .app-container {
   line-height: 1.7;
   text-transform: none;
   max-width: 560px;
-}
-
-/* ============================================
-   PAGE INSCRIPTION — BOUTON RETOUR
-   ============================================ */
-
-.inscription-back-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 10px 24px;
-  background-color: var(--bg-secondary);
-  background: var(--bg-secondary);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius);
-  font-family: 'Lato', sans-serif;
-  font-size: 0.8em;
-  font-weight: 900;
-  letter-spacing: 0.2em;
-  line-height: 1;
-  text-transform: uppercase;
-  text-decoration: none;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.inscription-back-btn:hover {
-  background-color: var(--bg-secondary);
-  background: var(--bg-secondary);
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 /* ============================================
