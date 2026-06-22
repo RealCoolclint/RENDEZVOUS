@@ -1,59 +1,30 @@
-const WebProfileSelector = (() => {
-  const PROFILES_URL = 'https://realcoolclint.github.io/tranquility-core/profiles-public.json';
-  // REPLACE: identifiant unique de l'app ex: 'ts_session_reviewer'
-  const LS_KEY  = 'ts_session_rendezvous';
-  // REPLACE: clé app dans appPermissions ex: 'reviewer'
-  const APP_KEY = 'rendezvous';
-  let _selectedProfile  = null;
-  let _selectedDuration = '7days';
+const MagicLinkAuth = (() => {
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const MAGIC_LINK_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/request-magic-link';
 
-  function readSession() {
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (!raw) return null;
-      const s = JSON.parse(raw);
-      if (s.expiresAt && new Date(s.expiresAt) < new Date()) {
-        localStorage.removeItem(LS_KEY);
-        return null;
-      }
-      return s;
-    } catch(e) { return null; }
+  function _updateSubmitBtn() {
+    const btn = document.getElementById('magic-submit');
+    const emailEl = document.getElementById('magic-email');
+    if (!btn || !emailEl) return;
+    const email = (emailEl.value || '').trim();
+    btn.disabled = !EMAIL_REGEX.test(email);
   }
 
-  function writeSession(profile, durationChoice) {
-    const expiresAt = (() => {
-      if (durationChoice === 'always') return null;
-      const d = new Date();
-      if (durationChoice === 'today') d.setHours(23, 59, 59, 0);
-      if (durationChoice === '7days') d.setDate(d.getDate() + 7);
-      return d.toISOString();
-    })();
-    const session = {
-      version:          2,
-      writtenBy:        APP_KEY,
-      writtenAt:        new Date().toISOString(),
-      expiresAt,
-      profileId:        profile.id,
-      profileName:      profile.firstName,
-      profileRole:      profile.role,
-      profileAvatar:    profile.avatar || null,
-      profileInitiales: profile.initiales,
-      profileColor:     profile.color || '#2563eb'
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify(session));
-    return session;
-  }
+  function _resetForm() {
+    const emailEl = document.getElementById('magic-email');
+    const formWrap = document.getElementById('magic-form-wrap');
+    const confirmation = document.getElementById('magic-confirmation');
+    const errorEl = document.getElementById('magic-error');
+    const btn = document.getElementById('magic-submit');
 
-  async function syncProfiles() {
-    try {
-      const res = await fetch(PROFILES_URL);
-      if (!res.ok) throw new Error('fetch failed');
-      const data = await res.json();
-      const src = Array.isArray(data) ? data : (data.profiles || []);
-      const profiles = src.filter(p => p.appPermissions && p.appPermissions[APP_KEY]);
-      return { online: true, profiles };
-    } catch(e) {
-      return { online: false, profiles: [] };
+    if (emailEl) emailEl.value = '';
+    if (formWrap) formWrap.removeAttribute('hidden');
+    if (confirmation) confirmation.setAttribute('hidden', '');
+    if (errorEl) errorEl.remove();
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Recevoir le lien';
     }
   }
 
@@ -73,141 +44,101 @@ const WebProfileSelector = (() => {
           if (history.pushState && window.location.hash === '#connexion') {
             history.pushState({}, '', window.location.pathname + window.location.search);
           }
+          _resetForm();
         }
       });
     }
   }
 
-  async function init(triggerEl) {
-    const session = readSession();
-    if (session) { _notifyReady(session); return; }
-    const { online, profiles } = await syncProfiles();
-    _updateOfflineBadge(!online);
-    render(profiles);
-    show(triggerEl);
-  }
+  async function _submitMagicLink() {
+    const btn = document.getElementById('magic-submit');
+    if (btn && btn.disabled) return;
 
-  function render(profiles) {
-    const grid  = document.getElementById('ps-profiles-grid');
-    const empty = document.getElementById('ps-empty-state');
-    if (!grid) return;
-    grid.innerHTML = '';
-    if (!profiles || profiles.length === 0) {
-      if (empty) empty.removeAttribute('hidden');
-      return;
+    const originalText = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'ENVOI...';
     }
-    if (empty) empty.setAttribute('hidden', '');
-    profiles.forEach(profile => {
-      const card = document.createElement('div');
-      card.className = 'ps-profile-card';
-      const initiales = profile.initiales || (profile.firstName||'').slice(0,1).toUpperCase();
-      const color = profile.color || '#2563eb';
-      const isAdmin = profile.role === 'admin';
-      card.innerHTML = `
-        <div class="ps-check">&#10003;</div>
-        <div class="ps-avatar-wrap">
-          <img class="ps-avatar" src="${profile.avatar||''}" alt="${profile.firstName||''}"
-            onerror="this.style.display='none';this.nextElementSibling.classList.remove('ps-hidden')" />
-          <div class="ps-avatar-fallback ps-hidden" style="background-color:${color}">${initiales}</div>
-        </div>
-        <div class="ps-profile-name">${profile.firstName||''}</div>
-        ${isAdmin ? '<span style="display:inline-block;background:transparent;border:1px solid #2563eb;color:#2563eb;font-family:Lato,sans-serif;font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;padding:1px 6px;border-radius:3px;white-space:nowrap;margin-top:2px;">ADMIN</span>' : ''}
-      `;
-      card.addEventListener('click', () => {
-        document.querySelectorAll('.ps-profile-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        _selectedProfile = profile;
-        const btn = document.getElementById('ps-connect-btn');
-        if (btn) btn.removeAttribute('disabled');
+
+    const previousError = document.getElementById('magic-error');
+    if (previousError) previousError.remove();
+
+    const email = (document.getElementById('magic-email')?.value || '').trim();
+
+    try {
+      const response = await fetch(MAGIC_LINK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
       });
-      grid.appendChild(card);
-    });
-    const oldBtn = document.getElementById('ps-connect-btn');
-    if (oldBtn) {
-      const newBtn = oldBtn.cloneNode(true);
-      oldBtn.parentNode.replaceChild(newBtn, oldBtn);
-      newBtn.addEventListener('click', connect);
-    }
-    document.querySelectorAll('input[name="ps-duration"]').forEach(i => {
-      i.addEventListener('change', () => { _selectedDuration = i.value; });
-    });
-  }
 
-  async function connect() {
-    if (!_selectedProfile) return;
-    const btn = document.getElementById('ps-connect-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'CONNEXION…'; }
-    const session = writeSession(_selectedProfile, _selectedDuration);
-    hide();
-    _notifyReady(session);
-  }
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
 
-  async function changeProfile() {
-    const { online, profiles } = await syncProfiles();
-    _updateOfflineBadge(!online);
-    render(profiles);
-    const trigger = document.getElementById('profile-avatar-btn');
-    show(trigger);
-  }
+      if (response.ok && data && data.success === true) {
+        const formWrap = document.getElementById('magic-form-wrap');
+        const confirmation = document.getElementById('magic-confirmation');
+        if (formWrap) formWrap.setAttribute('hidden', '');
+        if (confirmation) confirmation.removeAttribute('hidden');
+        GlassDrawer.refit('connect-drawer');
+        return;
+      }
 
-  function _updateOfflineBadge(isOffline) {
-    const badge = document.getElementById('ps-offline-badge');
-    if (!badge) return;
-    if (isOffline) badge.removeAttribute('hidden');
-    else badge.setAttribute('hidden', '');
-  }
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
 
-  function _notifyReady(session) {
-    window._activeSession = session;
-    const appContainer = document.querySelector('.app-container');
-    if (appContainer) appContainer.classList.add('ready');
-    _updateHeader(session);
-    if (typeof WebProfileSelector.onSessionReady === 'function') {
-      WebProfileSelector.onSessionReady(session);
-    }
-  }
+      let errorEl = document.getElementById('magic-error');
+      if (!errorEl) {
+        errorEl = document.createElement('p');
+        errorEl.id = 'magic-error';
+        errorEl.style.color = 'var(--danger)';
+        if (btn && btn.parentNode) btn.parentNode.insertBefore(errorEl, btn);
+      }
+      errorEl.textContent = (data && data.error) ? data.error : 'Une erreur est survenue, réessaie.';
+      GlassDrawer.refit('connect-drawer');
+    } catch (_) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
 
-  function _updateHeader(session) {
-    const wrap = document.getElementById('top-bar-profile');
-    if (wrap) wrap.style.display = 'flex';
-    const img      = document.getElementById('header-profile-avatar');
-    const fallback = document.getElementById('header-profile-fallback');
-    if (session.profileAvatar && img) {
-      img.src = session.profileAvatar;
-      img.style.display = 'block';
-      if (fallback) fallback.style.display = 'none';
-    } else if (fallback) {
-      if (img) img.style.display = 'none';
-      fallback.textContent = session.profileInitiales || '?';
-      fallback.style.backgroundColor = session.profileColor || '#2563eb';
-      fallback.style.display = 'flex';
-    }
-    const avatarBtn = document.getElementById('profile-avatar-btn');
-    if (avatarBtn) {
-      const newBtn = avatarBtn.cloneNode(true);
-      avatarBtn.parentNode.replaceChild(newBtn, avatarBtn);
-      newBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        changeProfile();
-      });
+      let errorEl = document.getElementById('magic-error');
+      if (!errorEl) {
+        errorEl = document.createElement('p');
+        errorEl.id = 'magic-error';
+        errorEl.style.color = 'var(--danger)';
+        if (btn && btn.parentNode) btn.parentNode.insertBefore(errorEl, btn);
+      }
+      errorEl.textContent = 'Une erreur est survenue, réessaie.';
+      GlassDrawer.refit('connect-drawer');
     }
   }
 
-  return { init, show, hide, changeProfile, onSessionReady: null };
+  document.addEventListener('DOMContentLoaded', function() {
+    const emailEl = document.getElementById('magic-email');
+    const submitBtn = document.getElementById('magic-submit');
+    if (emailEl) emailEl.addEventListener('input', _updateSubmitBtn);
+    if (submitBtn) submitBtn.addEventListener('click', _submitMagicLink);
+  });
+
+  return { show, hide };
 })();
 
 function showVitrine() {
-  WebProfileSelector.hide();
+  MagicLinkAuth.hide();
   switchView('main');
 }
 
 function showProfileSelector(triggerEl) {
-  WebProfileSelector.init(triggerEl);
+  MagicLinkAuth.show(triggerEl);
 }
 
 function closeConnect() {
-  WebProfileSelector.hide();
+  MagicLinkAuth.hide();
 }
 
 window.onMercuryComplete = function() {
@@ -276,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof GlassDrawer === 'undefined') return;
     if (window.location.hash === '#connexion') {
       if (!GlassDrawer.isOpen('connect-drawer')) {
-        WebProfileSelector.show(document.getElementById('connect-trigger'));
+        MagicLinkAuth.show(document.getElementById('connect-trigger'));
       }
     } else if (GlassDrawer.isOpen('connect-drawer')) {
       GlassDrawer.close('connect-drawer');
@@ -284,6 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   if (window.location.hash === '#connexion' && document.querySelector('.app-container.ready')) {
-    WebProfileSelector.init(document.getElementById('connect-trigger'));
+    MagicLinkAuth.show(document.getElementById('connect-trigger'));
   }
 });
