@@ -1,7 +1,123 @@
 const MagicLinkAuth = (() => {
+  const LS_KEY = 'ts_session_rendezvous';
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const MAGIC_LINK_URL =
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/request-magic-link';
+  const VERIFY_MAGIC_LINK_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/verify-magic-link';
+
+  function _decodeToken(token) {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padding = base64.length % 4;
+      if (padding) base64 += '='.repeat(4 - padding);
+      return JSON.parse(atob(base64));
+    } catch {
+      return null;
+    }
+  }
+
+  function readSession() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return null;
+      const session = JSON.parse(raw);
+      if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
+        localStorage.removeItem(LS_KEY);
+        return null;
+      }
+      return session;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeSession(sessionToken, email) {
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    const session = {
+      version: 3,
+      writtenBy: 'rendezvous',
+      writtenAt: new Date().toISOString(),
+      expiresAt,
+      token: sessionToken,
+      email
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(session));
+    return session;
+  }
+
+  function logout() {
+    localStorage.removeItem(LS_KEY);
+    const wrap = document.getElementById('top-bar-profile');
+    if (wrap) wrap.style.display = 'none';
+    showNotification('Déconnecté.');
+  }
+
+  function _updateHeader(session) {
+    const wrap = document.getElementById('top-bar-profile');
+    if (wrap) wrap.style.display = 'flex';
+    const img = document.getElementById('header-profile-avatar');
+    const fallback = document.getElementById('header-profile-fallback');
+    if (img) img.style.display = 'none';
+    if (fallback) {
+      fallback.textContent = (session.email || '?').charAt(0).toUpperCase();
+      fallback.style.display = 'flex';
+    }
+    const avatarBtn = document.getElementById('profile-avatar-btn');
+    if (avatarBtn) {
+      const newBtn = avatarBtn.cloneNode(true);
+      avatarBtn.parentNode.replaceChild(newBtn, avatarBtn);
+      newBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        logout();
+      });
+    }
+  }
+
+  async function _checkTokenInUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (!token) return;
+
+    function _cleanTokenFromUrl() {
+      if (history.replaceState) {
+        history.replaceState({}, '', window.location.pathname + window.location.hash);
+      }
+    }
+
+    try {
+      const response = await fetch(
+        VERIFY_MAGIC_LINK_URL + '?token=' + encodeURIComponent(token)
+      );
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+
+      _cleanTokenFromUrl();
+
+      if (response.ok && data && data.success === true && data.token) {
+        const decoded = _decodeToken(data.token);
+        if (!decoded || !decoded.email) {
+          showNotification('Lien invalide ou expiré.');
+          return;
+        }
+        const session = writeSession(data.token, decoded.email);
+        _updateHeader(session);
+        showNotification('Connecté.');
+        return;
+      }
+
+      showNotification('Lien invalide ou expiré.');
+    } catch {
+      _cleanTokenFromUrl();
+      showNotification('Lien invalide ou expiré.');
+    }
+  }
 
   function _updateSubmitBtn() {
     const btn = document.getElementById('magic-submit');
@@ -118,6 +234,15 @@ const MagicLinkAuth = (() => {
     }
   }
 
+  async function initSession() {
+    const session = readSession();
+    if (session) {
+      _updateHeader(session);
+    } else {
+      await _checkTokenInUrl();
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     const emailEl = document.getElementById('magic-email');
     const submitBtn = document.getElementById('magic-submit');
@@ -125,7 +250,7 @@ const MagicLinkAuth = (() => {
     if (submitBtn) submitBtn.addEventListener('click', _submitMagicLink);
   });
 
-  return { show, hide };
+  return { show, hide, logout, initSession };
 })();
 
 function showVitrine() {
@@ -146,6 +271,12 @@ window.onMercuryComplete = function() {
   const appContainer = document.querySelector('.app-container');
   if (appContainer) appContainer.classList.add('ready');
   showVitrine();
+};
+
+const _origMercury = window.onMercuryComplete;
+window.onMercuryComplete = function() {
+  if (typeof _origMercury === 'function') _origMercury();
+  MagicLinkAuth.initSession();
 };
 
 function showNotification(message) {
