@@ -53,6 +53,7 @@ const MagicLinkAuth = (() => {
     const wrap = document.getElementById('top-bar-profile');
     if (wrap) wrap.style.display = 'none';
     showNotification('Déconnecté.');
+    switchView('main');
   }
 
   function _updateHeader(session) {
@@ -472,6 +473,17 @@ const R6 = (() => {
 
     // Bascule vers la vue connectée
     switchView('connected');
+    _bindCtas();
+  }
+
+  function _bindCtas() {
+    document.querySelectorAll('.app-grid .affectation-cta').forEach(function(btn) {
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      newBtn.addEventListener('click', function() {
+        showNotification("Demande transmise — l'équipage Tranquility prend contact avec toi.");
+      });
+    });
   }
 
   return { init };
