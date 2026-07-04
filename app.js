@@ -349,3 +349,149 @@ document.addEventListener('DOMContentLoaded', function() {
     MagicLinkAuth.show(document.getElementById('connect-trigger'));
   }
 });
+
+// ============================================================
+// R6 — LOGIQUE VUE CONNECTÉE
+// ============================================================
+
+const R6 = (() => {
+
+  // Table de correspondance affectation → niveau + nom métier
+  // Source de vérité : D20→D31 (Plan Directeur V5.62)
+  const AFFECTATIONS = {
+    "COLUMBIA":       { niveau: "N1", metier: "Cellule Vidéo" },
+    "GUMDROP":        { niveau: "N2", metier: "Rédaction vidéo" },
+    "CHARLIE BROWN":  { niveau: "N2", metier: "Réseaux sociaux" },
+    "YANKEE CLIPPER": { niveau: "N2", metier: "DA / Studio" },
+    "ODYSSEY":        { niveau: "N2", metier: "Opérations spéciales" },
+    "CASPER":         { niveau: "N2", metier: "Édition web et print" },
+    "KITTY HAWK":     { niveau: "N2", metier: "Marchés hors captifs" }
+  };
+
+  // Table inverse : app → liste des affectations qui y donnent accès
+  // Utilisée pour le badge "Affectation [Nom] requise"
+  const APP_TO_AFFECTATIONS = {
+    "backupflow":  ["COLUMBIA"],
+    "transporter": ["COLUMBIA", "GUMDROP", "YANKEE CLIPPER"],
+    "manifest":    ["COLUMBIA", "YANKEE CLIPPER", "ODYSSEY"],
+    "reviewer":    ["COLUMBIA", "GUMDROP", "CHARLIE BROWN", "YANKEE CLIPPER", "ODYSSEY", "CASPER", "KITTY HAWK"],
+    "ark":         ["COLUMBIA", "GUMDROP"],
+    "rover":       ["COLUMBIA", "GUMDROP", "YANKEE CLIPPER"],
+    "covenant":    ["COLUMBIA", "GUMDROP", "CHARLIE BROWN", "ODYSSEY", "CASPER", "KITTY HAWK"]
+  };
+
+  // Décode le payload du JWT de session (déjà présent dans MagicLinkAuth._decodeToken
+  // mais on recopie ici pour garder R6 autonome)
+  function _decodeJwt(token) {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padding = base64.length % 4;
+      if (padding) base64 += '='.repeat(4 - padding);
+      return JSON.parse(atob(base64));
+    } catch {
+      return null;
+    }
+  }
+
+  // Rendu d'une carte selon l'état (déverrouillée ou verrouillée)
+  function _renderCard(card, appId, userApps, niveau, affectation) {
+    const badgeEl = card.querySelector('.app-card-badge');
+    const ctaEl   = card.querySelector('.app-card-cta');
+    if (!badgeEl || !ctaEl) return;
+
+    const hasAccess = Array.isArray(userApps) && userApps.includes(appId);
+
+    if (hasAccess) {
+      // Carte déverrouillée — pas de badge, pas de CTA
+      card.classList.remove('locked');
+      badgeEl.innerHTML = '';
+      ctaEl.innerHTML   = '';
+      return;
+    }
+
+    // Carte verrouillée — badge + CTA selon niveau
+    card.classList.add('locked');
+
+    if (niveau === 'N4') {
+      // N4 — badge "Accès individuel requis" + texte statique (D36 + D37)
+      badgeEl.innerHTML = `
+        <div class="affectation-badge">
+          <span class="affectation-badge-main">Accès individuel requis</span>
+        </div>`;
+      ctaEl.innerHTML = `
+        <span class="affectation-readonly">Accès en lecture — aucune action requise</span>`;
+
+    } else if (niveau === 'N3') {
+      // N3 — badge "Accès individuel requis" + CTA demande (D36)
+      badgeEl.innerHTML = `
+        <div class="affectation-badge">
+          <span class="affectation-badge-main">Accès individuel requis</span>
+        </div>`;
+      ctaEl.innerHTML = `
+        <button class="affectation-cta" type="button">Demander une affectation</button>`;
+
+    } else {
+      // N1 / N2 — badge "Affectation [Nom] requise" + nom métier + CTA (D33)
+      // On cherche la première affectation qui donne accès à cette app
+      const affectationsRequises = APP_TO_AFFECTATIONS[appId] || [];
+      const principale = affectationsRequises[0] || null;
+      const metier = principale && AFFECTATIONS[principale]
+        ? AFFECTATIONS[principale].metier
+        : '';
+      const badgeMain = principale
+        ? 'Affectation ' + principale + ' requise'
+        : 'Affectation requise';
+
+      badgeEl.innerHTML = `
+        <div class="affectation-badge">
+          <span class="affectation-badge-main">${badgeMain}</span>
+          ${metier ? '<span class="affectation-badge-sub">' + metier + '</span>' : ''}
+        </div>`;
+      ctaEl.innerHTML = `
+        <button class="affectation-cta" type="button">Demander une affectation</button>`;
+    }
+  }
+
+  // Point d'entrée principal — appelé après connexion réussie
+  function init(session) {
+    const payload = _decodeJwt(session.token);
+    if (!payload) return;
+
+    const niveau      = payload.niveau || null;
+    const userApps    = Array.isArray(payload.apps) ? payload.apps : [];
+    const affectation = payload.affectation || null;
+
+    // Rendu de toutes les cartes
+    document.querySelectorAll('.app-grid .app-card').forEach(function(card) {
+      const appId = card.dataset.appId;
+      if (!appId) return;
+      _renderCard(card, appId, userApps, niveau, affectation);
+    });
+
+    // Bascule vers la vue connectée
+    switchView('connected');
+  }
+
+  return { init };
+
+})();
+
+// Hook — R6.init() déclenché après toute connexion réussie
+// Wrapping de MagicLinkAuth.initSession (async, exposé)
+// Couvre les deux cas : session existante au chargement ET magic link live
+const _origInitSession = MagicLinkAuth.initSession.bind(MagicLinkAuth);
+MagicLinkAuth.initSession = async function() {
+  await _origInitSession();
+  try {
+    const raw = localStorage.getItem('ts_session_rendezvous');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s && s.token && (!s.expiresAt || new Date(s.expiresAt) > new Date())) {
+      R6.init(s);
+    }
+  } catch {}
+};
+
+// ============================================================
