@@ -47,13 +47,17 @@
                 </div>
             </header>
             <div class="glass-drawer-body connect-drawer-body">
-                <p class="glass-drawer-rgpd-lead">Entre ton adresse email pro : tu vas recevoir un lien de connexion par email pour accéder à la Tranquility Suite.</p>
+                <p class="glass-drawer-rgpd-lead">Connecte-toi avec ton email et ton mot de passe pour accéder à la Tranquility Suite.</p>
                 <div id="magic-form-wrap">
                     <div class="form-group">
                         <label for="magic-email">EMAIL PRO</label>
                         <input type="email" id="magic-email" class="input input--compact" placeholder="prenom.nom@letudiant.fr" autocomplete="email" />
                     </div>
-                    <button type="button" id="magic-submit" class="ps-connect-btn ps-connect-btn--drawer" disabled>Recevoir le lien</button>
+                    <div class="form-group">
+                        <label for="magic-password">MOT DE PASSE</label>
+                        <input type="password" id="magic-password" class="input input--compact" autocomplete="current-password" />
+                    </div>
+                    <button type="button" id="magic-submit" class="ps-connect-btn ps-connect-btn--drawer" disabled>Se connecter</button>
                 </div>
                 <div id="magic-confirmation" hidden>
                     <p class="confirmation-text">Si cette adresse correspond à un profil actif, tu vas recevoir un lien de connexion par email. Pense à vérifier tes spams.</p>

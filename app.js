@@ -1,8 +1,8 @@
 const MagicLinkAuth = (() => {
   const LS_KEY = 'ts_session_rendezvous';
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const MAGIC_LINK_URL =
-    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/request-magic-link';
+  const LOGIN_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/login';
   const VERIFY_MAGIC_LINK_URL =
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/verify-magic-link';
 
@@ -34,7 +34,7 @@ const MagicLinkAuth = (() => {
     }
   }
 
-  function writeSession(sessionToken, email) {
+  function writeSession(sessionToken, email, mustChangePassword) {
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
     const session = {
       version: 3,
@@ -44,6 +44,9 @@ const MagicLinkAuth = (() => {
       token: sessionToken,
       email
     };
+    if (mustChangePassword !== undefined) {
+      session.mustChangePassword = mustChangePassword;
+    }
     localStorage.setItem(LS_KEY, JSON.stringify(session));
     return session;
   }
@@ -123,25 +126,29 @@ const MagicLinkAuth = (() => {
   function _updateSubmitBtn() {
     const btn = document.getElementById('magic-submit');
     const emailEl = document.getElementById('magic-email');
-    if (!btn || !emailEl) return;
+    const passwordEl = document.getElementById('magic-password');
+    if (!btn || !emailEl || !passwordEl) return;
     const email = (emailEl.value || '').trim();
-    btn.disabled = !EMAIL_REGEX.test(email);
+    const password = (passwordEl.value || '').trim();
+    btn.disabled = !(EMAIL_REGEX.test(email) && password.length > 0);
   }
 
   function _resetForm() {
     const emailEl = document.getElementById('magic-email');
+    const passwordEl = document.getElementById('magic-password');
     const formWrap = document.getElementById('magic-form-wrap');
     const confirmation = document.getElementById('magic-confirmation');
     const errorEl = document.getElementById('magic-error');
     const btn = document.getElementById('magic-submit');
 
     if (emailEl) emailEl.value = '';
+    if (passwordEl) passwordEl.value = '';
     if (formWrap) formWrap.removeAttribute('hidden');
     if (confirmation) confirmation.setAttribute('hidden', '');
     if (errorEl) errorEl.remove();
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Recevoir le lien';
+      btn.textContent = 'Se connecter';
     }
   }
 
@@ -181,12 +188,13 @@ const MagicLinkAuth = (() => {
     if (previousError) previousError.remove();
 
     const email = (document.getElementById('magic-email')?.value || '').trim();
+    const password = (document.getElementById('magic-password')?.value || '');
 
     try {
-      const response = await fetch(MAGIC_LINK_URL, {
+      const response = await fetch(LOGIN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, password })
       });
 
       let data = null;
@@ -194,12 +202,33 @@ const MagicLinkAuth = (() => {
         data = await response.json();
       } catch (_) {}
 
-      if (response.ok && data && data.success === true) {
-        const formWrap = document.getElementById('magic-form-wrap');
-        const confirmation = document.getElementById('magic-confirmation');
-        if (formWrap) formWrap.setAttribute('hidden', '');
-        if (confirmation) confirmation.removeAttribute('hidden');
-        GlassDrawer.refit('connect-drawer');
+      if (response.ok && data && data.success === true && data.token) {
+        const decoded = _decodeToken(data.token);
+        if (!decoded || !decoded.email) {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+          }
+          let errorEl = document.getElementById('magic-error');
+          if (!errorEl) {
+            errorEl = document.createElement('p');
+            errorEl.id = 'magic-error';
+            errorEl.style.color = 'var(--danger)';
+            if (btn && btn.parentNode) btn.parentNode.insertBefore(errorEl, btn);
+          }
+          errorEl.textContent = 'Une erreur est survenue, réessaie.';
+          GlassDrawer.refit('connect-drawer');
+          return;
+        }
+        const session = writeSession(
+          data.token,
+          decoded.email,
+          data.mustChangePassword
+        );
+        _updateHeader(session);
+        R6.init(session);
+        showNotification('Connecté.');
+        hide();
         return;
       }
 
@@ -246,8 +275,10 @@ const MagicLinkAuth = (() => {
 
   document.addEventListener('DOMContentLoaded', function() {
     const emailEl = document.getElementById('magic-email');
+    const passwordEl = document.getElementById('magic-password');
     const submitBtn = document.getElementById('magic-submit');
     if (emailEl) emailEl.addEventListener('input', _updateSubmitBtn);
+    if (passwordEl) passwordEl.addEventListener('input', _updateSubmitBtn);
     if (submitBtn) submitBtn.addEventListener('click', _submitMagicLink);
   });
 
