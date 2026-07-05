@@ -7,9 +7,13 @@ const MagicLinkAuth = (() => {
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/verify-magic-link';
   const CHANGE_PASSWORD_URL =
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/change-password';
+  const VERIFY_SESSION_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/verify-session';
   const PASSWORD_REGEX = /^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$/;
+  const SESSION_VERIFY_INTERVAL_MS = 5 * 60 * 1000;
 
   let _pendingForcePasswordSession = null;
+  let _sessionVerifyIntervalId = null;
 
   function _decodeToken(token) {
     try {
@@ -26,11 +30,11 @@ const MagicLinkAuth = (() => {
 
   function readSession() {
     try {
-      const raw = localStorage.getItem(LS_KEY);
+      const raw = sessionStorage.getItem(LS_KEY);
       if (!raw) return null;
       const session = JSON.parse(raw);
       if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
-        localStorage.removeItem(LS_KEY);
+        sessionStorage.removeItem(LS_KEY);
         return null;
       }
       return session;
@@ -40,7 +44,7 @@ const MagicLinkAuth = (() => {
   }
 
   function writeSession(sessionToken, email, mustChangePassword) {
-    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString();
     const session = {
       version: 3,
       writtenBy: 'rendezvous',
@@ -52,15 +56,62 @@ const MagicLinkAuth = (() => {
     if (mustChangePassword !== undefined) {
       session.mustChangePassword = mustChangePassword;
     }
-    localStorage.setItem(LS_KEY, JSON.stringify(session));
+    sessionStorage.setItem(LS_KEY, JSON.stringify(session));
     return session;
   }
 
-  function logout() {
-    localStorage.removeItem(LS_KEY);
+  function _stopSessionVerification() {
+    if (_sessionVerifyIntervalId !== null) {
+      clearInterval(_sessionVerifyIntervalId);
+      _sessionVerifyIntervalId = null;
+    }
+  }
+
+  async function _verifySessionOnce() {
+    const session = readSession();
+    if (!session || !session.token) {
+      _stopSessionVerification();
+      return;
+    }
+
+    try {
+      const response = await fetch(VERIFY_SESSION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: session.token })
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+
+      if (data && data.valid === false) {
+        logout(true);
+      }
+    } catch (err) {
+      console.log('Verify-session — erreur réseau', err);
+    }
+  }
+
+  function _startSessionVerification() {
+    _stopSessionVerification();
+    const session = readSession();
+    if (!session || !session.token) return;
+    _verifySessionOnce();
+    _sessionVerifyIntervalId = setInterval(_verifySessionOnce, SESSION_VERIFY_INTERVAL_MS);
+  }
+
+  function logout(sessionExpired) {
+    _stopSessionVerification();
+    sessionStorage.removeItem(LS_KEY);
     const wrap = document.getElementById('top-bar-profile');
     if (wrap) wrap.style.display = 'none';
-    showNotification('Déconnecté.');
+    showNotification(
+      sessionExpired
+        ? 'Session expirée, merci de te reconnecter.'
+        : 'Déconnecté.'
+    );
     switchView('main');
   }
 
@@ -118,6 +169,7 @@ const MagicLinkAuth = (() => {
         const session = writeSession(data.token, decoded.email);
         _updateHeader(session);
         showNotification('Connecté.');
+        _startSessionVerification();
         return;
       }
 
@@ -250,7 +302,7 @@ const MagicLinkAuth = (() => {
 
       if (response.ok && data && data.success === true) {
         delete session.mustChangePassword;
-        localStorage.setItem(LS_KEY, JSON.stringify(session));
+        sessionStorage.setItem(LS_KEY, JSON.stringify(session));
         _pendingForcePasswordSession = null;
         if (typeof GlassDrawer !== 'undefined') {
           GlassDrawer.close('force-password-drawer');
@@ -258,6 +310,7 @@ const MagicLinkAuth = (() => {
         hide();
         R6.init(session);
         showNotification('Mot de passe mis à jour.');
+        _startSessionVerification();
         return;
       }
 
@@ -371,11 +424,13 @@ const MagicLinkAuth = (() => {
           _pendingForcePasswordSession = session;
           hide();
           _showForcePasswordDrawer();
+          _startSessionVerification();
           return;
         }
         R6.init(session);
         showNotification('Connecté.');
         hide();
+        _startSessionVerification();
         return;
       }
 
@@ -418,10 +473,15 @@ const MagicLinkAuth = (() => {
       if (session.mustChangePassword === true) {
         _pendingForcePasswordSession = session;
         _showForcePasswordDrawer();
+        _startSessionVerification();
         return;
       }
+      _startSessionVerification();
     } else {
       await _checkTokenInUrl();
+      if (readSession()) {
+        _startSessionVerification();
+      }
     }
   }
 
@@ -691,7 +751,7 @@ const _origInitSession = MagicLinkAuth.initSession.bind(MagicLinkAuth);
 MagicLinkAuth.initSession = async function() {
   await _origInitSession();
   try {
-    const raw = localStorage.getItem('ts_session_rendezvous');
+    const raw = sessionStorage.getItem('ts_session_rendezvous');
     if (!raw) return;
     const s = JSON.parse(raw);
     if (s && s.token && (!s.expiresAt || new Date(s.expiresAt) > new Date())) {
