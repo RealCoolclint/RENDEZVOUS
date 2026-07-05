@@ -66,6 +66,33 @@
         </aside>
     </div>
 
+    <div id="force-password-drawer" class="glass-drawer glass-drawer--left" data-no-escape aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="force-password-title">
+        <div class="glass-drawer-backdrop" aria-hidden="true"></div>
+        <div class="glass-drawer-bloom" aria-hidden="true"></div>
+        <aside class="glass-drawer-panel">
+            <header class="glass-drawer-header">
+                <div class="glass-drawer-header-text">
+                    <p class="glass-drawer-eyebrow">Cellule Vidéo L'Étudiant</p>
+                    <h2 id="force-password-title">Nouveau mot de passe requis</h2>
+                </div>
+            </header>
+            <div class="glass-drawer-body connect-drawer-body">
+                <p class="glass-drawer-rgpd-lead">Pour continuer, choisis un nouveau mot de passe. Minimum 8 caractères, avec au moins une lettre et un chiffre.</p>
+                <div id="force-password-form-wrap">
+                    <div class="form-group">
+                        <label for="new-password">NOUVEAU MOT DE PASSE</label>
+                        <input type="password" id="new-password" class="input input--compact" autocomplete="new-password" />
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password-confirm">CONFIRMER LE MOT DE PASSE</label>
+                        <input type="password" id="new-password-confirm" class="input input--compact" autocomplete="new-password" />
+                    </div>
+                    <button type="button" id="force-password-submit" class="ps-connect-btn ps-connect-btn--drawer" disabled>VALIDER</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
     <div class="app-container web-app">
         <header class="top-bar">
             <div class="top-bar-brand">

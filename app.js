@@ -5,6 +5,11 @@ const MagicLinkAuth = (() => {
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/login';
   const VERIFY_MAGIC_LINK_URL =
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/verify-magic-link';
+  const CHANGE_PASSWORD_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/change-password';
+  const PASSWORD_REGEX = /^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$/;
+
+  let _pendingForcePasswordSession = null;
 
   function _decodeToken(token) {
     try {
@@ -152,6 +157,142 @@ const MagicLinkAuth = (() => {
     }
   }
 
+  function _showForcePasswordDrawer() {
+    if (typeof GlassDrawer !== 'undefined') {
+      GlassDrawer.open('force-password-drawer');
+    }
+  }
+
+  function _updateForcePasswordSubmitBtn() {
+    const btn = document.getElementById('force-password-submit');
+    const passwordEl = document.getElementById('new-password');
+    const confirmEl = document.getElementById('new-password-confirm');
+    if (!btn || !passwordEl || !confirmEl) return;
+    const password = (passwordEl.value || '').trim();
+    const confirm = (confirmEl.value || '').trim();
+    btn.disabled = !(
+      PASSWORD_REGEX.test(password) &&
+      password === confirm
+    );
+  }
+
+  async function _submitForcePassword() {
+    const btn = document.getElementById('force-password-submit');
+    if (btn && btn.disabled) return;
+
+    const session = _pendingForcePasswordSession || readSession();
+    if (!session || !session.token) return;
+
+    const originalText = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'ENVOI...';
+    }
+
+    const previousError = document.getElementById('force-password-error');
+    if (previousError) previousError.remove();
+
+    const newPassword = (document.getElementById('new-password')?.value || '').trim();
+    const confirmPassword = (document.getElementById('new-password-confirm')?.value || '').trim();
+
+    if (!PASSWORD_REGEX.test(newPassword)) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+      let errorEl = document.getElementById('force-password-error');
+      if (!errorEl) {
+        errorEl = document.createElement('p');
+        errorEl.id = 'force-password-error';
+        errorEl.style.color = 'var(--danger)';
+        if (btn && btn.parentNode) btn.parentNode.insertBefore(errorEl, btn);
+      }
+      errorEl.textContent =
+        'Le mot de passe doit contenir au moins 8 caractères, avec au moins une lettre et un chiffre.';
+      GlassDrawer.refit('force-password-drawer');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+      let errorEl = document.getElementById('force-password-error');
+      if (!errorEl) {
+        errorEl = document.createElement('p');
+        errorEl.id = 'force-password-error';
+        errorEl.style.color = 'var(--danger)';
+        if (btn && btn.parentNode) btn.parentNode.insertBefore(errorEl, btn);
+      }
+      errorEl.textContent = 'Les mots de passe ne correspondent pas.';
+      GlassDrawer.refit('force-password-drawer');
+      return;
+    }
+
+    try {
+      const response = await fetch(CHANGE_PASSWORD_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.token
+        },
+        body: JSON.stringify({
+          token: session.token,
+          newPassword
+        })
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+
+      if (response.ok && data && data.success === true) {
+        delete session.mustChangePassword;
+        localStorage.setItem(LS_KEY, JSON.stringify(session));
+        _pendingForcePasswordSession = null;
+        if (typeof GlassDrawer !== 'undefined') {
+          GlassDrawer.close('force-password-drawer');
+        }
+        hide();
+        R6.init(session);
+        showNotification('Mot de passe mis à jour.');
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+
+      let errorEl = document.getElementById('force-password-error');
+      if (!errorEl) {
+        errorEl = document.createElement('p');
+        errorEl.id = 'force-password-error';
+        errorEl.style.color = 'var(--danger)';
+        if (btn && btn.parentNode) btn.parentNode.insertBefore(errorEl, btn);
+      }
+      errorEl.textContent = (data && data.error) ? data.error : 'Une erreur est survenue, réessaie.';
+      GlassDrawer.refit('force-password-drawer');
+    } catch (_) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+
+      let errorEl = document.getElementById('force-password-error');
+      if (!errorEl) {
+        errorEl = document.createElement('p');
+        errorEl.id = 'force-password-error';
+        errorEl.style.color = 'var(--danger)';
+        if (btn && btn.parentNode) btn.parentNode.insertBefore(errorEl, btn);
+      }
+      errorEl.textContent = 'Une erreur est survenue, réessaie.';
+      GlassDrawer.refit('force-password-drawer');
+    }
+  }
+
   function show(triggerEl) {
     if (typeof GlassDrawer !== 'undefined') {
       GlassDrawer.open('connect-drawer', triggerEl);
@@ -226,6 +367,12 @@ const MagicLinkAuth = (() => {
           data.mustChangePassword
         );
         _updateHeader(session);
+        if (data.mustChangePassword === true) {
+          _pendingForcePasswordSession = session;
+          hide();
+          _showForcePasswordDrawer();
+          return;
+        }
         R6.init(session);
         showNotification('Connecté.');
         hide();
@@ -268,6 +415,11 @@ const MagicLinkAuth = (() => {
     const session = readSession();
     if (session) {
       _updateHeader(session);
+      if (session.mustChangePassword === true) {
+        _pendingForcePasswordSession = session;
+        _showForcePasswordDrawer();
+        return;
+      }
     } else {
       await _checkTokenInUrl();
     }
@@ -280,6 +432,17 @@ const MagicLinkAuth = (() => {
     if (emailEl) emailEl.addEventListener('input', _updateSubmitBtn);
     if (passwordEl) passwordEl.addEventListener('input', _updateSubmitBtn);
     if (submitBtn) submitBtn.addEventListener('click', _submitMagicLink);
+
+    const newPasswordEl = document.getElementById('new-password');
+    const newPasswordConfirmEl = document.getElementById('new-password-confirm');
+    const forcePasswordSubmitBtn = document.getElementById('force-password-submit');
+    if (newPasswordEl) newPasswordEl.addEventListener('input', _updateForcePasswordSubmitBtn);
+    if (newPasswordConfirmEl) {
+      newPasswordConfirmEl.addEventListener('input', _updateForcePasswordSubmitBtn);
+    }
+    if (forcePasswordSubmitBtn) {
+      forcePasswordSubmitBtn.addEventListener('click', _submitForcePassword);
+    }
   });
 
   return { show, hide, logout, initSession };
@@ -532,6 +695,7 @@ MagicLinkAuth.initSession = async function() {
     if (!raw) return;
     const s = JSON.parse(raw);
     if (s && s.token && (!s.expiresAt || new Date(s.expiresAt) > new Date())) {
+      if (s.mustChangePassword === true) return;
       R6.init(s);
     }
   } catch {}

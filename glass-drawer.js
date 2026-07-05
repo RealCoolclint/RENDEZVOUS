@@ -221,6 +221,7 @@ const GlassDrawer = (function() {
     if (e.key !== 'Escape') return;
     const openDrawer = document.querySelector('.glass-drawer.is-open');
     if (!openDrawer) return;
+    if (openDrawer.hasAttribute('data-no-escape')) return;
     const rgpdView = document.getElementById('inscription-rgpd-view');
     if (openDrawer.id === 'inscription-drawer' && rgpdView && !rgpdView.hasAttribute('hidden')) {
       closeRgpdNotice();
