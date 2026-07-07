@@ -255,6 +255,26 @@
     }
   }
 
+  function showToast(type, message) {
+    const container = document.getElementById('toasts');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    setTimeout(function() {
+      toast.style.transition = 'opacity 300ms ease';
+      toast.style.opacity = '0';
+      setTimeout(function() {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 3000);
+  }
+
   async function refreshProfilesList() {
     const secret = sessionStorage.getItem(STORAGE_KEY);
     if (!secret) return;
@@ -342,6 +362,13 @@
       });
 
       if (response.ok) {
+        if (selectedAction === 'activer') {
+          showToast('success', 'Profil validé — email envoyé.');
+        } else if (selectedAction === 'reactiver') {
+          showToast('success', 'Profil réactivé.');
+        } else if (selectedAction === 'archiver') {
+          showToast('warning', 'Profil archivé.');
+        }
         await refreshProfilesList();
         if (typeof GlassDrawer !== 'undefined') {
           GlassDrawer.close('admin-detail-drawer');
