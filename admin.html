@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://realcoolclint.github.io; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com; media-src 'self' blob:; connect-src https://raw.githubusercontent.com https://api.github.com https://realcoolclint.github.io https://rendezvous-proxy-tranquility.netlify.app;">
+    <script>
+      const now = new Date();
+      const jj = String(now.getDate()).padStart(2,'0');
+      const mm = String(now.getMonth()+1).padStart(2,'0');
+      const aa = String(now.getFullYear()).slice(-2);
+      window.APP_VERSION = 'V1.' + jj + '.' + mm + '.' + aa;
+    </script>
+    <title>TRANQUILITY SUITE — ADMIN</title>
+    <link rel="stylesheet" href="https://realcoolclint.github.io/tranquility-core/tranquility-core.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=21">
+</head>
+<body class="dark-theme">
+    <div id="admin-auth-backdrop" class="admin-auth-backdrop"></div>
+    <div id="admin-auth-screen" class="admin-auth-screen">
+        <h2 class="glass-drawer-header">Accès admin</h2>
+        <p class="glass-drawer-rgpd-lead">Saisis le secret administrateur pour continuer.</p>
+        <label for="admin-secret-input" class="glass-drawer-rgpd-lead" style="margin-bottom: -8px;">Secret administrateur</label>
+        <input type="password" id="admin-secret-input" class="input input--compact" autocomplete="off" />
+        <button type="button" id="admin-secret-submit" class="ps-connect-btn ps-connect-btn--drawer">Valider</button>
+        <p id="admin-secret-error" class="admin-auth-error" style="display: none;"></p>
+    </div>
+
+    <div id="admin-content" style="display: none;">
+    <header class="top-bar">
+        <h1>ADMIN — RENDEZVOUS</h1>
+    </header>
+
+    <main>
+        <h2 class="fleet-section-title">Profils</h2>
+        <div class="admin-tabs">
+            <button type="button" data-filter="pending" class="admin-tab tab-active">Pending</button>
+            <button type="button" data-filter="active" class="admin-tab">Actifs</button>
+            <button type="button" data-filter="archived" class="admin-tab">Archivés</button>
+        </div>
+        <div id="profiles-list" class="app-grid"></div>
+    </main>
+    </div>
+
+    <div id="admin-detail-drawer" class="glass-drawer glass-drawer--left" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="admin-detail-title">
+        <button type="button" class="glass-drawer-backdrop" aria-label="Fermer le détail" id="admin-detail-close-backdrop"></button>
+        <div class="glass-drawer-bloom" aria-hidden="true"></div>
+        <aside class="glass-drawer-panel">
+            <header class="glass-drawer-header">
+                <div class="glass-drawer-header-text">
+                    <p class="glass-drawer-eyebrow">Profil</p>
+                    <h2 id="admin-detail-title"></h2>
+                </div>
+                <div class="glass-drawer-header-actions">
+                    <button type="button" class="glass-drawer-close" id="admin-detail-close-btn" aria-label="Retour à la liste">FERMER</button>
+                </div>
+            </header>
+            <div class="glass-drawer-body">
+                <div class="form-group">
+                    <label>EMAIL</label>
+                    <p id="admin-detail-email" class="text-secondary"></p>
+                </div>
+                <div class="form-group">
+                    <label>RÔLE</label>
+                    <p id="admin-detail-role" class="text-secondary"></p>
+                </div>
+
+                <label class="inscription-rgpd-inline">
+                    <input type="checkbox" id="admin-detail-toggle-custom" class="rgpd-checkbox" />
+                    <span class="rgpd-text">Niveau personnalisé (sans affectation)</span>
+                </label>
+
+                <div id="admin-detail-exception-banner" class="admin-detail-exception-banner" style="display: none;">
+                    Mode hors standard — ce profil ne suit pas une affectation nommée.
+                </div>
+
+                <div id="admin-detail-affectation-block" class="form-group">
+                    <label for="admin-detail-affectation-select">AFFECTATION</label>
+                    <select id="admin-detail-affectation-select" class="input input--compact">
+                        <option value="COLUMBIA">COLUMBIA</option>
+                        <option value="GUMDROP">GUMDROP</option>
+                        <option value="CHARLIE BROWN">CHARLIE BROWN</option>
+                        <option value="YANKEE CLIPPER">YANKEE CLIPPER</option>
+                        <option value="ODYSSEY">ODYSSEY</option>
+                        <option value="CASPER">CASPER</option>
+                        <option value="KITTY HAWK">KITTY HAWK</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="admin-detail-niveau-select">NIVEAU</label>
+                    <select id="admin-detail-niveau-select" class="input input--compact">
+                        <option value="N1">N1</option>
+                        <option value="N2">N2</option>
+                        <option value="N3">N3</option>
+                        <option value="N4">N4</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>APPS</label>
+                    <div id="admin-detail-apps-grid" class="admin-detail-apps-grid">
+                        <label><input type="checkbox" data-app="backupflow" /> BackUpFlow</label>
+                        <label><input type="checkbox" data-app="transporter" /> Transporter</label>
+                        <label><input type="checkbox" data-app="manifest" /> Manifest</label>
+                        <label><input type="checkbox" data-app="reviewer" /> Reviewer</label>
+                        <label><input type="checkbox" data-app="ark" /> ARK</label>
+                        <label><input type="checkbox" data-app="rover" /> ROVER</label>
+                        <label><input type="checkbox" data-app="covenant" /> COVENANT</label>
+                    </div>
+                </div>
+
+                <div id="admin-detail-status-actions"></div>
+
+                <p id="admin-detail-action-error" class="admin-auth-error" style="display: none;"></p>
+
+                <button type="button" id="admin-detail-save-btn" class="ps-connect-btn ps-connect-btn--drawer">Enregistrer</button>
+            </div>
+        </aside>
+    </div>
+
+    <script src="glass-drawer.js?v=7"></script>
+    <script src="admin.js?v=1"></script>
+</body>
+</html>

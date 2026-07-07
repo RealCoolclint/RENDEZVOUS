@@ -1459,6 +1459,11 @@ body:not(.glass-drawer-open) .app-container {
   cursor: not-allowed;
 }
 
+.admin-detail-status-btn.is-selected {
+  background: var(--accent-hover);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
 .top-bar-profile {
   align-items: center;
   margin-right: 12px;
@@ -2209,6 +2214,160 @@ body:not(.glass-drawer-open) .app-container {
   text-transform: uppercase;
   color: var(--text-secondary);
   opacity: 0.5;
+}
+
+/* ============================================================ */
+/* ADMIN — ONGLETS DE FILTRE                                    */
+/* ============================================================ */
+
+.admin-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.admin-tab {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-secondary);
+}
+
+.admin-tab[data-filter="pending"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.admin-tab[data-filter="active"] {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.admin-tab[data-filter="archived"] {
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.admin-tab[data-filter="pending"].tab-active {
+  background: var(--accent-light);
+}
+
+.admin-tab[data-filter="active"].tab-active {
+  background: var(--success-light);
+}
+
+.admin-tab[data-filter="archived"].tab-active {
+  background: var(--warning-light);
+}
+
+/* ============================================================ */
+/* ADMIN — ÉCRAN D'AUTHENTIFICATION                               */
+/* ============================================================ */
+
+.admin-auth-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 24, 0.6);
+  backdrop-filter: blur(8px) saturate(1.15);
+  -webkit-backdrop-filter: blur(8px) saturate(1.15);
+  z-index: 9500;
+}
+
+.admin-auth-screen {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: 360px;
+  height: fit-content;
+  z-index: 9502;
+  background: rgba(22, 32, 52, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.45),
+    0 8px 24px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.admin-auth-error {
+  color: var(--danger);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.75em;
+  text-transform: none;
+  line-height: 1.4;
+}
+
+/* ============================================================ */
+/* ADMIN — BADGES STATUT PROFIL                                   */
+/* ============================================================ */
+
+.status-pending {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.status-active-profile {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.status-archived-profile {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+/* ============================================================ */
+/* ADMIN — PANNEAU DÉTAIL                                         */
+/* ============================================================ */
+
+.admin-detail-exception-banner {
+  background: var(--warning-light);
+  color: var(--warning);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8em;
+  line-height: 1.4;
+  border: 1px solid var(--warning);
+}
+
+.admin-detail-apps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.admin-detail-apps-grid label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-detail-apps-grid label input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+#profiles-list .app-card {
+  cursor: pointer;
 }
 
 /* ============================================================ */
