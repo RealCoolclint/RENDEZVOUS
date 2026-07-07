@@ -179,6 +179,24 @@
         errorEl.textContent = '';
         errorEl.style.display = 'none';
       }
+      const previewEl = document.getElementById('admin-detail-action-preview');
+      if (previewEl) {
+        previewEl.style.display = 'block';
+        previewEl.classList.remove(
+          'admin-detail-action-preview--success',
+          'admin-detail-action-preview--warning'
+        );
+        if (selectedAction === 'activer') {
+          previewEl.textContent = 'Action sélectionnée : valider ce profil';
+          previewEl.classList.add('admin-detail-action-preview--success');
+        } else if (selectedAction === 'archiver') {
+          previewEl.textContent = 'Action sélectionnée : archiver ce profil';
+          previewEl.classList.add('admin-detail-action-preview--warning');
+        } else if (selectedAction === 'reactiver') {
+          previewEl.textContent = 'Action sélectionnée : réactiver ce profil';
+          previewEl.classList.add('admin-detail-action-preview--success');
+        }
+      }
     });
     container.appendChild(btn);
   }
@@ -220,6 +238,15 @@
     if (actionErrorEl) {
       actionErrorEl.textContent = '';
       actionErrorEl.style.display = 'none';
+    }
+    const actionPreviewEl = document.getElementById('admin-detail-action-preview');
+    if (actionPreviewEl) {
+      actionPreviewEl.textContent = '';
+      actionPreviewEl.style.display = 'none';
+      actionPreviewEl.classList.remove(
+        'admin-detail-action-preview--success',
+        'admin-detail-action-preview--warning'
+      );
     }
     renderStatusActionButton(profil);
 

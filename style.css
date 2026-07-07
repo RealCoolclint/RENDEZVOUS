@@ -1464,6 +1464,26 @@ body:not(.glass-drawer-open) .app-container {
   box-shadow: 0 0 0 2px var(--accent-light);
 }
 
+.admin-detail-action-preview {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.75em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.admin-detail-action-preview--success {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.admin-detail-action-preview--warning {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
 .top-bar-profile {
   align-items: center;
   margin-right: 12px;
