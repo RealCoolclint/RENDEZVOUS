@@ -635,6 +635,9 @@ const R6 = (() => {
     "covenant":    ["COLUMBIA", "GUMDROP", "CHARLIE BROWN", "ODYSSEY", "CASPER", "KITTY HAWK"]
   };
 
+  const REQUEST_AFFECTATION_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/request-affectation';
+
   // Décode le payload du JWT de session (déjà présent dans MagicLinkAuth._decodeToken
   // mais on recopie ici pour garder R6 autonome)
   function _decodeJwt(token) {
@@ -734,8 +737,49 @@ const R6 = (() => {
     document.querySelectorAll('.app-grid .affectation-cta').forEach(function(btn) {
       const newBtn = btn.cloneNode(true);
       btn.parentNode.replaceChild(newBtn, btn);
-      newBtn.addEventListener('click', function() {
-        showNotification("Demande transmise — l'équipage Tranquility prend contact avec toi.");
+      newBtn.addEventListener('click', async function() {
+        if (newBtn.disabled) return;
+
+        const card = newBtn.closest('.app-card');
+        const appId = card && card.dataset.appId;
+        if (!appId) return;
+
+        newBtn.disabled = true;
+        newBtn.textContent = 'Envoi...';
+
+        try {
+          const raw = sessionStorage.getItem('ts_session_rendezvous');
+          const session = JSON.parse(raw);
+          const token = session && session.token;
+
+          const response = await fetch(REQUEST_AFFECTATION_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, appId })
+          });
+
+          let data = null;
+          try {
+            data = await response.json();
+          } catch (_) {}
+
+          if (response.ok) {
+            newBtn.disabled = true;
+            newBtn.textContent = 'Demande envoyée';
+            showNotification("Demande transmise — l'équipage Tranquility prend contact avec toi.");
+            return;
+          }
+
+          newBtn.disabled = false;
+          newBtn.textContent = 'Demander une affectation';
+          showNotification(
+            (data && data.error) ? data.error : 'Erreur réseau, réessaie.'
+          );
+        } catch (_) {
+          newBtn.disabled = false;
+          newBtn.textContent = 'Demander une affectation';
+          showNotification('Erreur réseau, réessaie.');
+        }
       });
     });
   }
