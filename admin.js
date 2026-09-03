@@ -428,6 +428,43 @@
         window.adminProfiles = (result && result.profiles) ? result.profiles : [];
         showAdminContent();
         renderProfiles('pending');
+
+        const requestedId = new URLSearchParams(window.location.search).get('profileId');
+        if (requestedId) {
+          const profil = window.adminProfiles.find(function(p) {
+            return p && String(p.id) === String(requestedId);
+          });
+          const targetTabs = profil
+            ? Array.prototype.filter.call(
+                document.querySelectorAll('.admin-tab'),
+                function(btn) { return btn.dataset.filter === profil.statut; }
+              )
+            : [];
+
+          if (profil && targetTabs.length > 0) {
+            document.querySelectorAll('.admin-tab').forEach(function(btn) {
+              btn.classList.toggle('tab-active', btn.dataset.filter === profil.statut);
+            });
+            renderProfiles(profil.statut);
+
+            const listEl = document.getElementById('profiles-list');
+            const card = listEl
+              ? listEl.querySelector('.app-card[data-profile-id="' + String(requestedId).replace(/"/g, '\\"') + '"]')
+              : null;
+            if (card) {
+              openProfileDetail(profil, card);
+
+              const cleanParams = new URLSearchParams(window.location.search);
+              cleanParams.delete('profileId');
+              const query = cleanParams.toString();
+              history.replaceState(
+                history.state,
+                '',
+                window.location.pathname + (query ? '?' + query : '') + window.location.hash
+              );
+            }
+          }
+        }
         return;
       }
 
