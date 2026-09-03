@@ -198,6 +198,9 @@
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'ps-connect-btn ps-connect-btn--drawer admin-detail-status-btn';
+      if (item.action === 'archiver') {
+        btn.classList.add('admin-detail-status-btn--warning');
+      }
       btn.dataset.action = item.action;
       btn.textContent = item.label;
       btn.addEventListener('click', function() {
