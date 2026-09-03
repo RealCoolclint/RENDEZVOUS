@@ -180,54 +180,60 @@
 
     container.textContent = '';
 
-    let label = '';
-    let action = '';
+    let actions = [];
     if (profil.statut === 'pending') {
-      label = 'VALIDER';
-      action = 'activer';
+      actions = [{ label: 'VALIDER', action: 'activer' }];
     } else if (profil.statut === 'active') {
-      label = 'ARCHIVER';
-      action = 'archiver';
+      actions = [
+        { label: 'MODIFIER', action: 'modifier' },
+        { label: 'ARCHIVER', action: 'archiver' }
+      ];
     } else if (profil.statut === 'archived') {
-      label = 'RÉACTIVER';
-      action = 'reactiver';
+      actions = [{ label: 'RÉACTIVER', action: 'reactiver' }];
     } else {
       return;
     }
 
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'ps-connect-btn ps-connect-btn--drawer admin-detail-status-btn';
-    btn.dataset.action = action;
-    btn.textContent = label;
-    btn.addEventListener('click', function() {
-      selectedAction = btn.dataset.action;
-      btn.classList.add('is-selected');
-      const errorEl = document.getElementById('admin-detail-action-error');
-      if (errorEl) {
-        errorEl.textContent = '';
-        errorEl.style.display = 'none';
-      }
-      const previewEl = document.getElementById('admin-detail-action-preview');
-      if (previewEl) {
-        previewEl.style.display = 'block';
-        previewEl.classList.remove(
-          'admin-detail-action-preview--success',
-          'admin-detail-action-preview--warning'
-        );
-        if (selectedAction === 'activer') {
-          previewEl.textContent = 'Action sélectionnée : valider ce profil';
-          previewEl.classList.add('admin-detail-action-preview--success');
-        } else if (selectedAction === 'archiver') {
-          previewEl.textContent = 'Action sélectionnée : archiver ce profil';
-          previewEl.classList.add('admin-detail-action-preview--warning');
-        } else if (selectedAction === 'reactiver') {
-          previewEl.textContent = 'Action sélectionnée : réactiver ce profil';
-          previewEl.classList.add('admin-detail-action-preview--success');
+    actions.forEach(function(item) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ps-connect-btn ps-connect-btn--drawer admin-detail-status-btn';
+      btn.dataset.action = item.action;
+      btn.textContent = item.label;
+      btn.addEventListener('click', function() {
+        selectedAction = btn.dataset.action;
+        container.querySelectorAll('.admin-detail-status-btn').forEach(function(b) {
+          b.classList.remove('is-selected');
+        });
+        btn.classList.add('is-selected');
+        const errorEl = document.getElementById('admin-detail-action-error');
+        if (errorEl) {
+          errorEl.textContent = '';
+          errorEl.style.display = 'none';
         }
-      }
+        const previewEl = document.getElementById('admin-detail-action-preview');
+        if (previewEl) {
+          previewEl.style.display = 'block';
+          previewEl.classList.remove(
+            'admin-detail-action-preview--success',
+            'admin-detail-action-preview--warning'
+          );
+          if (selectedAction === 'activer') {
+            previewEl.textContent = 'Action sélectionnée : valider ce profil';
+            previewEl.classList.add('admin-detail-action-preview--success');
+          } else if (selectedAction === 'archiver') {
+            previewEl.textContent = 'Action sélectionnée : archiver ce profil';
+            previewEl.classList.add('admin-detail-action-preview--warning');
+          } else if (selectedAction === 'reactiver') {
+            previewEl.textContent = 'Action sélectionnée : réactiver ce profil';
+            previewEl.classList.add('admin-detail-action-preview--success');
+          } else if (selectedAction === 'modifier') {
+            previewEl.textContent = 'Action sélectionnée : modifier l\'affectation de ce profil';
+          }
+        }
+      });
+      container.appendChild(btn);
     });
-    container.appendChild(btn);
   }
 
   function openProfileDetail(profil, cardElement) {
@@ -397,6 +403,8 @@
           showToast('success', 'Profil réactivé.');
         } else if (selectedAction === 'archiver') {
           showToast('warning', 'Profil archivé.');
+        } else if (selectedAction === 'modifier') {
+          showToast('success', 'Affectation mise à jour.');
         }
         await refreshProfilesList();
         if (typeof GlassDrawer !== 'undefined') {
