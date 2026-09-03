@@ -5,6 +5,35 @@
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-update-profile';
   const STORAGE_KEY = 'admin_secret';
 
+  function _storeAdminSecret(secret) {
+    const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ value: secret, expiresAt: expiresAt }));
+  }
+
+  function _readAdminSecret() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed.value !== 'string' || typeof parsed.expiresAt !== 'number') {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      if (Date.now() > parsed.expiresAt) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      return parsed.value;
+    } catch (_) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+  }
+
+  function _clearAdminSecret() {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
   let selectedAction = null;
 
   // ATTENTION : cette table est dupliquée depuis AFFECTATIONS dans
@@ -276,7 +305,7 @@
   }
 
   async function refreshProfilesList() {
-    const secret = sessionStorage.getItem(STORAGE_KEY);
+    const secret = _readAdminSecret();
     if (!secret) return;
 
     try {
@@ -351,7 +380,7 @@
         }
       }
 
-      const secret = sessionStorage.getItem(STORAGE_KEY);
+      const secret = _readAdminSecret();
       const response = await fetch(ADMIN_UPDATE_URL, {
         method: 'POST',
         headers: {
@@ -424,7 +453,7 @@
           result = await response.json();
         } catch (_) {}
 
-        sessionStorage.setItem(STORAGE_KEY, secret);
+        _storeAdminSecret(secret);
         window.adminProfiles = (result && result.profiles) ? result.profiles : [];
         showAdminContent();
         renderProfiles('pending');
@@ -470,7 +499,7 @@
 
       if (response.status === 401) {
         if (isAutoCheck) {
-          sessionStorage.removeItem(STORAGE_KEY);
+          _clearAdminSecret();
           showAuthError('Ta session a expiré, resaisis le secret.');
           if (input) input.focus();
         } else {
@@ -583,7 +612,7 @@
       saveDetailBtn.addEventListener('click', submitDetailSave);
     }
 
-    const stored = sessionStorage.getItem(STORAGE_KEY);
+    const stored = _readAdminSecret();
     if (stored) {
       verifySecret(stored, true);
     } else if (input) {
