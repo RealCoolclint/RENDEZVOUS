@@ -84,9 +84,10 @@ async function soumettreInscription() {
   const email  = (document.getElementById('insc-email')?.value || '').trim();
   const role   = (document.getElementById('insc-role')?.value || '').trim();
   const lien   = (document.getElementById('insc-lien-video')?.value || '').trim();
+  const siteWeb = (document.getElementById('insc-site-web')?.value || '').trim();
 
   const demande = {
-    prenom, nom, email, role, lienVideo: lien,
+    prenom, nom, email, role, lienVideo: lien, siteWeb,
     rgpdAccepte: true,
     rgpdTimestamp: new Date().toISOString(),
     statut: 'pending',
