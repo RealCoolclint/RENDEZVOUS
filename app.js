@@ -806,3 +806,72 @@ MagicLinkAuth.initSession = async function() {
 };
 
 // ============================================================
+
+function initCardAmbianceVideos() {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    return;
+  }
+
+  let activeVideo = null;
+
+  function getCardVideo(card) {
+    if (!card) return null;
+    const patchZone = card.querySelector('.card-patch-zone');
+    if (!patchZone) return null;
+    return patchZone.querySelector('video.card-ambiance-video');
+  }
+
+  function stopVideo(video) {
+    if (!video) return;
+    video.classList.remove('is-playing');
+    video.pause();
+    video.currentTime = 0;
+    if (activeVideo === video) activeVideo = null;
+  }
+
+  function playCardVideo(card) {
+    const video = getCardVideo(card);
+    if (!video) return;
+
+    if (activeVideo && activeVideo !== video) {
+      stopVideo(activeVideo);
+    }
+
+    activeVideo = video;
+    video.classList.add('is-playing');
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(function() {});
+    }
+  }
+
+  function handleMouseOver(e) {
+    const grid = e.currentTarget;
+    const card = e.target.closest('.fleet-card, .app-card');
+    if (!card || !grid.contains(card)) return;
+
+    const related = e.relatedTarget;
+    if (related && card.contains(related)) return;
+
+    playCardVideo(card);
+  }
+
+  function handleMouseOut(e) {
+    const grid = e.currentTarget;
+    const card = e.target.closest('.fleet-card, .app-card');
+    if (!card || !grid.contains(card)) return;
+
+    const related = e.relatedTarget;
+    if (related && card.contains(related)) return;
+
+    const video = getCardVideo(card);
+    if (video) stopVideo(video);
+  }
+
+  document.querySelectorAll('.app-grid, .fleet-grid').forEach(function(grid) {
+    grid.addEventListener('mouseover', handleMouseOver);
+    grid.addEventListener('mouseout', handleMouseOut);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initCardAmbianceVideos);

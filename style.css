@@ -1708,7 +1708,7 @@ body:not(.glass-drawer-open) .app-container {
 }
 
 .fleet-card {
-  background: var(--bg-elevated);
+  background: radial-gradient(circle at 50% 35%, var(--bg-highest) 0%, var(--bg-elevated) 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 20px;
@@ -1720,7 +1720,50 @@ body:not(.glass-drawer-open) .app-container {
 
 .fleet-card:hover {
   border-color: var(--accent);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.fleet-card > .fleet-card-status {
+  margin-top: auto;
+}
+
+.fleet-card .card-patch-zone,
+.app-card .card-patch-zone {
+  width: 84px;
+  height: 84px;
+  position: relative;
+  align-self: center;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+}
+
+.fleet-card:hover .card-patch-zone,
+.app-card:hover .card-patch-zone {
+  border-color: var(--accent);
+}
+
+.fleet-card .card-patch-zone .card-patch-img,
+.fleet-card .card-patch-zone .card-ambiance-video,
+.app-card .card-patch-zone .card-patch-img,
+.app-card .card-patch-zone .card-ambiance-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.fleet-card .card-patch-zone .card-ambiance-video,
+.app-card .card-patch-zone .card-ambiance-video {
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.fleet-card .card-patch-zone .card-ambiance-video.is-playing,
+.app-card .card-patch-zone .card-ambiance-video.is-playing {
+  opacity: 1;
 }
 
 .fleet-card-name {
@@ -2166,7 +2209,7 @@ body:not(.glass-drawer-open) .app-container {
 
 /* Carte app — état déverrouillé */
 .app-card {
-  background: var(--bg-secondary);
+  background: radial-gradient(circle at 50% 35%, var(--bg-highest) 0%, var(--bg-elevated) 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -2178,8 +2221,14 @@ body:not(.glass-drawer-open) .app-container {
 }
 .app-card:hover {
   border-color: var(--accent);
-  background: var(--bg-tertiary);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
+
+.app-card > .app-card-cta {
+  margin-top: auto;
+}
+
 .app-card-name {
   font-family: 'Lato', sans-serif;
   font-size: 13px;
@@ -2198,6 +2247,8 @@ body:not(.glass-drawer-open) .app-container {
 .app-card.locked:hover {
   border-color: var(--border);
   background: var(--bg-secondary);
+  transform: none;
+  box-shadow: none;
 }
 
 /* Badge affectation requise */
