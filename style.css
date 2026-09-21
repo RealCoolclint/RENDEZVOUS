@@ -1715,7 +1715,12 @@ body:not(.glass-drawer-open) .app-container {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
   transition: var(--transition);
+}
+
+.fleet-card:has(.card-patch-zone) {
+  padding-top: 114px;
 }
 
 .fleet-card:hover {
@@ -1728,19 +1733,67 @@ body:not(.glass-drawer-open) .app-container {
   margin-top: auto;
 }
 
-.fleet-card .card-patch-zone,
-.app-card .card-patch-zone {
+.fleet-card .card-patch-zone {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 84px;
   height: 84px;
-  position: relative;
-  align-self: center;
   border: 2px solid var(--border);
   border-radius: 50%;
+  transition: var(--transition);
+}
+
+.app-card .card-patch-zone {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 84px;
+  height: 84px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  transition: var(--transition);
 }
 
 .fleet-card:hover .card-patch-zone,
 .app-card:hover .card-patch-zone {
   border-color: var(--accent);
+}
+
+.fleet-card:hover .card-patch-zone:has(.card-ambiance-video) {
+  top: 0;
+  left: 0;
+  transform: translateX(0);
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.app-card:hover .card-patch-zone:has(.card-ambiance-video) {
+  top: 0;
+  left: 0;
+  transform: translateX(0);
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.fleet-card:hover .card-patch-zone:has(.card-ambiance-video) .card-patch-img,
+.fleet-card:hover .card-patch-zone:has(.card-ambiance-video) .card-ambiance-video {
+  border-radius: var(--radius-md);
+}
+
+.app-card:hover .card-patch-zone:has(.card-ambiance-video) .card-patch-img,
+.app-card:hover .card-patch-zone:has(.card-ambiance-video) .card-ambiance-video {
+  border-radius: var(--radius-lg);
 }
 
 .fleet-card .card-patch-zone .card-patch-img,
@@ -1773,6 +1826,8 @@ body:not(.glass-drawer-open) .app-container {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--text-primary);
+  position: relative;
+  z-index: 2;
 }
 
 .fleet-card-mission {
@@ -1782,6 +1837,8 @@ body:not(.glass-drawer-open) .app-container {
   line-height: 1.5;
   flex: 1;
   text-transform: none;
+  position: relative;
+  z-index: 2;
 }
 
 .fleet-card-status {
@@ -1794,6 +1851,8 @@ body:not(.glass-drawer-open) .app-container {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   align-self: flex-start;
+  position: relative;
+  z-index: 2;
 }
 
 .status-available {
@@ -2216,8 +2275,13 @@ body:not(.glass-drawer-open) .app-container {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: relative;
   transition: var(--transition);
   cursor: pointer;
+}
+
+.app-card:has(.card-patch-zone) {
+  padding-top: 116px;
 }
 .app-card:hover {
   border-color: var(--accent);
@@ -2227,6 +2291,13 @@ body:not(.glass-drawer-open) .app-container {
 
 .app-card > .app-card-cta {
   margin-top: auto;
+  position: relative;
+  z-index: 2;
+}
+
+.app-card-badge {
+  position: relative;
+  z-index: 2;
 }
 
 .app-card-name {
@@ -2236,6 +2307,8 @@ body:not(.glass-drawer-open) .app-container {
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--text-primary);
+  position: relative;
+  z-index: 2;
 }
 
 /* Carte app — état verrouillé */
