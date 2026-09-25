@@ -2624,6 +2624,10 @@ body:has(#mainView.active) .top-bar-brand {
   mix-blend-mode: lighten;
 }
 
+.lobby-stage picture {
+  display: contents;
+}
+
 .lobby-blur {
   position: absolute;
   inset: -30%;
