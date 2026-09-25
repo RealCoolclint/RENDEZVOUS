@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=27">
+    <link rel="stylesheet" href="style.css?v=28">
 </head>
 <body class="dark-theme">
     <div id="mercury-opening">
@@ -27,7 +27,7 @@
             stroke-dasharray="722" stroke-dashoffset="722" id="mercury-radar-circle"/>
         </svg>
         <!-- REPLACE: patch video src -->
-        <video id="mercury-patch" src="assets/ambiance_TRANQUILITY.mp4" autoplay muted playsinline loop poster="assets/patch_TRANQUILITY.png"></video>
+        <video id="mercury-patch" src="assets/ambiance_TRANQUILITY.mp4" autoplay muted playsinline loop poster="assets/patch_TRANQUILITY.png" disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback noplaybackrate" tabindex="-1"></video>
         <span id="mercury-version"></span>
       </div>
     </div>
@@ -128,7 +128,7 @@
   </svg>
 
   <div class="lobby-stage" aria-hidden="true">
-    <video class="lobby-patch" src="assets/ambiance_TRANQUILITY.mp4" poster="assets/patch_TRANQUILITY.png" autoplay muted loop playsinline></video>
+    <video class="lobby-patch" src="assets/ambiance_TRANQUILITY.mp4" poster="assets/patch_TRANQUILITY.png" autoplay muted loop playsinline disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback noplaybackrate" tabindex="-1"></video>
     <div class="lobby-blur"></div>
   </div>
 

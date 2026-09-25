@@ -2950,6 +2950,27 @@ body:has(#mainView.active) .top-bar-brand {
   color: var(--warning);
 }
 
+/* Vidéos de décor : ni survol, ni contrôles natifs (Opera, Safari) */
+.lobby-stage,
+.lobby-patch,
+#mercury-patch {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.lobby-patch::-webkit-media-controls,
+.lobby-patch::-webkit-media-controls-panel,
+.lobby-patch::-webkit-media-controls-overlay-play-button,
+.lobby-patch::-webkit-media-controls-start-playback-button,
+#mercury-patch::-webkit-media-controls,
+#mercury-patch::-webkit-media-controls-panel,
+#mercury-patch::-webkit-media-controls-overlay-play-button,
+#mercury-patch::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 @keyframes lobby-patch-in {
   from {
     opacity: 0;
