@@ -2733,7 +2733,8 @@ body:has(#mainView.active) .top-bar-brand {
   position: absolute;
   z-index: 5;
   left: clamp(24px, 6.7vw, 96px);
-  bottom: 112px;
+  bottom: calc(112px + max(0px, (100vh - 700px) / 2));
+  bottom: calc(112px + max(0px, (100dvh - 700px) / 2));
   width: min(660px, calc(100% - 48px));
   display: flex;
   flex-direction: column;
