@@ -2587,7 +2587,8 @@ body:has(#mainView) .top-bar {
   --lobby-patch: clamp(300px, 42vw, 600px);
   position: relative;
   flex: 1;
-  min-height: 620px;
+  min-height: max(620px, calc(100vh - 80px));
+  min-height: max(620px, calc(100dvh - 80px));
   overflow: hidden;
   background: var(--bg-void);
   color: var(--text-primary);
@@ -2826,7 +2827,7 @@ body:has(#mainView.active) .top-bar-brand {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 28px;
 }
 
 .lobby-cta {
