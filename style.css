@@ -2598,12 +2598,6 @@ body:has(#mainView.active) .top-bar-brand {
   visibility: hidden;
 }
 
-.lobby-filters {
-  position: absolute;
-  width: 0;
-  height: 0;
-}
-
 .lobby-stage {
   position: absolute;
   z-index: 1;
@@ -2612,7 +2606,6 @@ body:has(#mainView.active) .top-bar-brand {
   right: max(8px, 1vw);
   top: 50%;
   transform: translateY(-50%);
-  filter: url(#tq-aberration);
   animation: lobby-patch-in 900ms var(--ease-out-strong) both;
 }
 
@@ -2626,16 +2619,6 @@ body:has(#mainView.active) .top-bar-brand {
 
 .lobby-stage picture {
   display: contents;
-}
-
-.lobby-blur {
-  position: absolute;
-  inset: -30%;
-  pointer-events: none;
-  backdrop-filter: blur(3.5px);
-  -webkit-backdrop-filter: blur(3.5px);
-  mask-image: radial-gradient(circle closest-side at 50% 50%, transparent 0%, transparent 54.6%, rgba(0, 0, 0, 0.45) 63.5%, black 81.25%);
-  -webkit-mask-image: radial-gradient(circle closest-side at 50% 50%, transparent 0%, transparent 54.6%, rgba(0, 0, 0, 0.45) 63.5%, black 81.25%);
 }
 
 .lobby-horizon {

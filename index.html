@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=29">
+    <link rel="stylesheet" href="style.css?v=30">
 </head>
 <body class="dark-theme">
     <div id="mercury-opening">
@@ -115,24 +115,11 @@
             <div id="mainView" class="view active">
 <section class="lobby" aria-label="Tranquility Suite">
 
-  <svg class="lobby-filters" width="0" height="0" aria-hidden="true" focusable="false">
-    <filter id="tq-aberration" x="-4%" y="-4%" width="108%" height="108%" color-interpolation-filters="sRGB">
-      <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="rouge"/>
-      <feOffset in="rouge" dx="-1.6" dy="0.3" result="rougeDecale"/>
-      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="vert"/>
-      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="bleu"/>
-      <feOffset in="bleu" dx="1.6" dy="-0.3" result="bleuDecale"/>
-      <feBlend in="rougeDecale" in2="vert" mode="screen" result="rougeVert"/>
-      <feBlend in="rougeVert" in2="bleuDecale" mode="screen"/>
-    </filter>
-  </svg>
-
   <div class="lobby-stage" aria-hidden="true">
     <picture>
-      <source srcset="assets/patch_TRANQUILITY.avif" type="image/avif">
+      <source srcset="assets/patch_TRANQUILITY_v2.avif" type="image/avif">
       <img class="lobby-patch" src="assets/patch_TRANQUILITY.png" alt="" draggable="false" decoding="async">
     </picture>
-    <div class="lobby-blur"></div>
   </div>
 
   <div class="lobby-horizon" aria-hidden="true">
