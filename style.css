@@ -1136,7 +1136,7 @@ body:not(.glass-drawer-open) .app-container {
 #mercury-opening {
   position: fixed;
   inset: 0;
-  background: #0a0f1e;
+  background: var(--bg-void);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2548,3 +2548,27 @@ body:not(.glass-drawer-open) .app-container {
 }
 
 /* ============================================================ */
+
+/* ============================================================ */
+/* VITRINE — NOIR PUR ET BLANC FRANC (D142 · D148 · D150)       */
+/* Limité à la page vitrine : admin.html n'est pas concerné.    */
+/* ============================================================ */
+body:has(#mainView),
+body:has(#mainView) .app-container,
+body:has(#mainView) .main-content {
+  background: var(--bg-void);
+}
+body:has(#mainView) .top-bar {
+  background: var(--bg-void);
+  border-bottom-color: transparent;
+}
+/* Neutralise uniquement le gris générique de tranquility-core.css
+   (p, span, li, h2, h3, label, small). :where() ramène la spécificité
+   à celle du core : cette règle gagne contre le core, mais perd contre
+   toute classe de RENDEZVOUS, ce qui préserve les couleurs voulues. */
+:where(body:has(#mainView) #mainView, body:has(#mainView) #connectedView) :is(p, span, li, h2, h3, label, small) {
+  color: var(--text-primary);
+}
+:where(body:has(#mainView) #mainView, body:has(#mainView) #connectedView) h2 {
+  border-bottom: none;
+}
