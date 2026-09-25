@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=22">
+    <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body class="dark-theme">
     <div id="mercury-opening">
@@ -27,7 +27,7 @@
             stroke-dasharray="722" stroke-dashoffset="722" id="mercury-radar-circle"/>
         </svg>
         <!-- REPLACE: patch video src -->
-        <video id="mercury-patch" src="assets/ambiance_TRANQUILITY.mp4" autoplay muted playsinline loop></video>
+        <video id="mercury-patch" src="assets/ambiance_TRANQUILITY.mp4" autoplay muted playsinline loop poster="assets/patch_TRANQUILITY.png"></video>
         <span id="mercury-version"></span>
       </div>
     </div>
@@ -467,7 +467,11 @@
       setTimeout(() => { opening.style.opacity = '1'; }, 180);
       setTimeout(() => {
         const patch = document.getElementById('mercury-patch');
-        if (patch) patch.classList.add('visible');
+        if (patch) {
+          patch.classList.add('visible');
+          const p = patch.play();
+          if (p && typeof p.catch === 'function') { p.catch(function() {}); }
+        }
       }, 550);
 
       setTimeout(() => {

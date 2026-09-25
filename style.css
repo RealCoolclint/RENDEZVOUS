@@ -1179,6 +1179,13 @@ body:not(.glass-drawer-open) .app-container {
   transition: opacity 1.8s ease, transform 2.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+#mercury-patch::-webkit-media-controls-start-playback-button,
+#mercury-patch::-webkit-media-controls-overlay-play-button,
+#mercury-patch::-webkit-media-controls {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
 #mercury-patch.visible {
   opacity: 1;
   transform: scale(1) rotate(0deg);
