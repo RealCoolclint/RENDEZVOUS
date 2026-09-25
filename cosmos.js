@@ -50,6 +50,8 @@
     var stars = [];
     var dusts = [];
     var shooting = null;
+    var prochaineFilante = 0;
+    var dernierT = null;
     var lastDustSpawn = 0;
     var rafId = null;
     var stopped = false;
@@ -139,13 +141,13 @@
       }
     }
 
-    function updateDust() {
+    function updateDust(k) {
       var i, d, edge, life, op, grad;
       for (i = dusts.length - 1; i >= 0; i--) {
         d = dusts[i];
-        d.age += 1;
-        d.x += d.vx;
-        d.y += d.vy + Math.sin(d.age * d.wf + d.seed) * 0.12;
+        d.age += k;
+        d.x += d.vx * k;
+        d.y += (d.vy + Math.sin(d.age * d.wf + d.seed) * 0.12) * k;
         if (d.x > W + 80) {
           dusts.splice(i, 1);
           continue;
@@ -172,28 +174,49 @@
       }
     }
 
-    function updateShootingStar() {
+    /** Délai initial : 6–15 s. */
+    function planifierPremiereFilante(now) {
+      prochaineFilante = now + 6000 + Math.random() * 9000;
+    }
+
+    /** Délai suivant : 12–30 s. */
+    function planifierProchaineFilante(t) {
+      prochaineFilante = t + 12000 + Math.random() * 18000;
+    }
+
+    function creerFilante() {
+      var f = 0.6 + Math.random() * 1.0;
+      return {
+        x: W * (0.2 + Math.random() * 0.7),
+        y: Math.random() * H * 0.35,
+        life: 0,
+        f: f,
+        L: 80 + Math.random() * 80,
+        p: 0.30 + Math.random() * 0.30,
+        e: 0.5 + Math.random() * 0.35,
+        lifeMax: 60 / f
+      };
+    }
+
+    function updateShootingStar(t, k) {
       if (!shooting) {
-        if (Math.random() < 0.004) {
-          shooting = {
-            x: W * (0.2 + Math.random() * 0.7),
-            y: Math.random() * H * 0.35,
-            life: 0
-          };
+        if (t > prochaineFilante) {
+          shooting = creerFilante();
         }
         return;
       }
-      shooting.life += 1;
-      if (shooting.life > 60) {
+      shooting.life += k;
+      if (shooting.life > shooting.lifeMax) {
         shooting = null;
+        planifierProchaineFilante(t);
         return;
       }
-      var px = shooting.x - shooting.life * 9;
-      var py = shooting.y + shooting.life * 4;
-      var x2 = px + 120;
-      var y2 = py - 120 * 0.44;
+      var px = shooting.x - shooting.life * 9 * shooting.f;
+      var py = shooting.y + shooting.life * 9 * shooting.f * shooting.p;
+      var x2 = px + shooting.L;
+      var y2 = py - shooting.L * shooting.p;
       var grad = ctx.createLinearGradient(px, py, x2, y2);
-      grad.addColorStop(0, 'rgba(' + colors.primary + ',0.75)');
+      grad.addColorStop(0, 'rgba(' + colors.primary + ',' + shooting.e + ')');
       grad.addColorStop(1, 'rgba(' + colors.primary + ',0)');
       ctx.strokeStyle = grad;
       ctx.lineWidth = 1.4;
@@ -208,11 +231,20 @@
       if (stopped) return;
       if (!isDisplayed()) return;
 
+      /* Facteur temps réel (réf. ~60 fps) ; k = 1 au 1er frame / après pause. */
+      var k = 1;
+      if (dernierT != null) {
+        k = (t - dernierT) / 16.667;
+        if (k < 0) k = 0;
+        if (k > 3) k = 3;
+      }
+      dernierT = t;
+
       ctx.clearRect(0, 0, W, H);
       drawStarsTwinkle(t);
       maybeSpawnDust(t);
-      updateDust();
-      updateShootingStar();
+      updateDust(k);
+      updateShootingStar(t, k);
 
       rafId = requestAnimationFrame(tick);
     }
@@ -220,7 +252,10 @@
     function ensureRunning() {
       if (stopped || reducedMotion) return;
       if (!isDisplayed()) return;
-      if (rafId == null) rafId = requestAnimationFrame(tick);
+      if (rafId == null) {
+        dernierT = null;
+        rafId = requestAnimationFrame(tick);
+      }
     }
 
     function onVisibility() {
@@ -251,6 +286,7 @@
       drawStarsStatic();
     } else {
       lastDustSpawn = performance.now();
+      planifierPremiereFilante(performance.now());
       ensureRunning();
     }
 
