@@ -612,7 +612,7 @@ document.addEventListener('DOMContentLoaded', function() {
 const R6 = (() => {
 
   // Table de correspondance affectation → niveau + nom métier
-  // Source de vérité : D20→D31 (Plan Directeur V5.62)
+  // Source de vérité : D20→D31 (Plan Directeur V5.62) + D128 (CODEX dans COLUMBIA et GUMDROP)
   const AFFECTATIONS = {
     "COLUMBIA":       { niveau: "N1", metier: "Cellule Vidéo" },
     "GUMDROP":        { niveau: "N2", metier: "Rédaction vidéo" },
@@ -632,7 +632,8 @@ const R6 = (() => {
     "reviewer":    ["COLUMBIA", "GUMDROP", "CHARLIE BROWN", "YANKEE CLIPPER", "ODYSSEY", "CASPER", "KITTY HAWK"],
     "ark":         ["COLUMBIA", "GUMDROP"],
     "rover":       ["COLUMBIA", "GUMDROP", "YANKEE CLIPPER"],
-    "covenant":    ["COLUMBIA", "GUMDROP", "CHARLIE BROWN", "ODYSSEY", "CASPER", "KITTY HAWK"]
+    "covenant":    ["COLUMBIA", "GUMDROP", "CHARLIE BROWN", "ODYSSEY", "CASPER", "KITTY HAWK"],
+    "codex":       ["GUMDROP", "COLUMBIA"]
   };
 
   const REQUEST_AFFECTATION_URL =

@@ -40,8 +40,8 @@
   // rendezvous-proxy/netlify/functions/admin-update-profile.js.
   // Si la liste des affectations change côté serveur, penser à synchroniser ici aussi.
   const AFFECTATIONS = {
-    "COLUMBIA":       { niveau: "N1", apps: ["backupflow", "transporter", "manifest", "reviewer", "ark", "rover", "covenant"] },
-    "GUMDROP":        { niveau: "N2", apps: ["transporter", "reviewer", "ark", "rover", "covenant"] },
+    "COLUMBIA":       { niveau: "N1", apps: ["backupflow", "transporter", "manifest", "reviewer", "ark", "rover", "covenant", "codex"] },
+    "GUMDROP":        { niveau: "N2", apps: ["transporter", "reviewer", "ark", "rover", "covenant", "codex"] },
     "CHARLIE BROWN":  { niveau: "N2", apps: ["reviewer", "covenant"] },
     "YANKEE CLIPPER": { niveau: "N2", apps: ["reviewer", "transporter", "rover", "manifest"] },
     "ODYSSEY":        { niveau: "N2", apps: ["reviewer", "covenant", "manifest"] },
