@@ -2572,3 +2572,492 @@ body:has(#mainView) .top-bar {
 :where(body:has(#mainView) #mainView, body:has(#mainView) #connectedView) h2 {
   border-bottom: none;
 }
+
+/* ============================================================ */
+/* LOBBY — R8 lot 2a (D142 · D146 · D148 · D150)                */
+/* ============================================================ */
+
+.view.active:has(.lobby) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lobby {
+  --lobby-patch: clamp(300px, 42vw, 600px);
+  position: relative;
+  flex: 1;
+  min-height: 620px;
+  overflow: hidden;
+  background: var(--bg-void);
+  color: var(--text-primary);
+}
+
+body:has(#mainView.active) .top-bar-brand {
+  visibility: hidden;
+}
+
+.lobby-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.lobby-stage {
+  position: absolute;
+  z-index: 1;
+  width: var(--lobby-patch);
+  height: var(--lobby-patch);
+  right: max(8px, 1vw);
+  top: 50%;
+  transform: translateY(-50%);
+  filter: url(#tq-aberration);
+  animation: lobby-patch-in 900ms var(--ease-out-strong) both;
+}
+
+.lobby-patch {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: lighten;
+}
+
+.lobby-blur {
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  backdrop-filter: blur(3.5px);
+  -webkit-backdrop-filter: blur(3.5px);
+  mask-image: radial-gradient(circle closest-side at 50% 50%, transparent 0%, transparent 54.6%, rgba(0, 0, 0, 0.45) 63.5%, black 81.25%);
+  -webkit-mask-image: radial-gradient(circle closest-side at 50% 50%, transparent 0%, transparent 54.6%, rgba(0, 0, 0, 0.45) 63.5%, black 81.25%);
+}
+
+.lobby-horizon {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 260px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lobby-horizon-glow {
+  position: absolute;
+  left: 50%;
+  bottom: 90px;
+  width: min(900px, 90vw);
+  height: 180px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--warning) 38%, transparent) 0%, color-mix(in srgb, var(--warning) 14%, transparent) 30%, transparent 68%);
+  animation: lobby-sunrise 9s ease-in-out infinite;
+}
+
+.lobby-horizon-moon {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  top: 170px;
+  height: 1400px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 0%, var(--bg-secondary) 0%, var(--bg-primary) 18%, var(--bg-void) 40%);
+  border-top: 1px solid color-mix(in srgb, var(--text-primary) 35%, transparent);
+  box-shadow: 0 -2px 30px color-mix(in srgb, var(--warning) 22%, transparent), inset 0 12px 40px color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.lobby-veil {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lobby-veil--left {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--bg-void) 96%, transparent) 0%, color-mix(in srgb, var(--bg-void) 82%, transparent) 34%, color-mix(in srgb, var(--bg-void) 20%, transparent) 66%, color-mix(in srgb, var(--bg-void) 30%, transparent) 100%);
+}
+
+.lobby-veil--bottom {
+  background: linear-gradient(0deg, color-mix(in srgb, var(--bg-void) 92%, transparent) 0%, transparent 42%);
+}
+
+.lobby-veil--top {
+  inset: auto;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 260px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-void) 90%, transparent) 0%, transparent 100%);
+}
+
+.lobby-cosmos {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.lobby-devises {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  top: 20px;
+  height: 28px;
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 12%, black 88%, transparent 100%);
+}
+
+.lobby-devises-track {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  font-family: 'Lato', sans-serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  line-height: 28px;
+  color: var(--text-primary);
+  animation: lobby-crawl 70s linear infinite;
+}
+
+.lobby-hero {
+  position: absolute;
+  z-index: 5;
+  left: clamp(24px, 6.7vw, 96px);
+  bottom: 112px;
+  width: min(660px, calc(100% - 48px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lobby-kicker {
+  margin: 0;
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.lobby-title {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-family: 'Lato', sans-serif;
+  font-weight: 900;
+  font-size: clamp(44px, 5.3vw, 76px);
+  line-height: 0.95;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.lobby-motto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lobby-motto-latin {
+  margin: 0;
+  font-family: 'Lato', sans-serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 16px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.lobby-motto-fr {
+  margin: 0;
+  font-family: 'Lato', sans-serif;
+  font-size: 13px;
+  text-transform: none;
+}
+
+.lobby-promise {
+  margin: 4px 0 0;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+  max-width: 580px;
+  text-transform: none;
+}
+
+.lobby-benefits {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lobby-benefits li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 15px;
+  text-transform: none;
+}
+
+.lobby-benefits li::before {
+  content: "";
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warning);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--warning) 70%, transparent);
+}
+
+.lobby-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.lobby-cta {
+  height: 52px;
+  padding: 0 26px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-primary);
+  font-family: 'Lato', sans-serif;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.lobby-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.lobby-cta:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.lobby-ghost {
+  height: 52px;
+  padding: 0 22px;
+  border: 1px solid var(--border-hover);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--text-primary) 7%, transparent);
+  color: var(--text-primary);
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.lobby-ghost:hover {
+  background: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--text-primary) 30%, transparent);
+}
+
+.lobby-ghost:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.lobby-in {
+  animation: lobby-hero-in 700ms var(--ease-out-strong) both;
+}
+
+.lobby-in--2 {
+  animation-delay: 120ms;
+}
+
+.lobby-in--3 {
+  animation-delay: 240ms;
+}
+
+.lobby-steps {
+  position: absolute;
+  z-index: 5;
+  left: clamp(24px, 6.7vw, 96px);
+  bottom: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  font-family: 'Lato', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.lobby-steps-title {
+  font-weight: 900;
+}
+
+.lobby-steps-rule {
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: color-mix(in srgb, var(--text-secondary) 50%, transparent);
+}
+
+.lobby-steps-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+
+.lobby-steps-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.lobby-steps-list li + li::before {
+  content: "›";
+  color: var(--text-secondary);
+  margin-right: 10px;
+}
+
+.lobby-steps-num {
+  color: var(--warning);
+}
+
+@keyframes lobby-patch-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+@keyframes lobby-patch-in-portrait {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+@keyframes lobby-sunrise {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes lobby-crawl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes lobby-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1024px) and (orientation: portrait), (max-width: 760px) {
+  .lobby {
+    --lobby-patch: min(70vw, 46vh);
+  }
+
+  .lobby-stage {
+    left: 50%;
+    right: auto;
+    top: 7%;
+    transform: translateX(-50%);
+    animation-name: lobby-patch-in-portrait;
+  }
+
+  .lobby-veil--left {
+    display: none;
+  }
+
+  .lobby-veil--bottom {
+    background: linear-gradient(0deg, color-mix(in srgb, var(--bg-void) 96%, transparent) 0%, color-mix(in srgb, var(--bg-void) 70%, transparent) 45%, transparent 65%);
+  }
+
+  .lobby-hero {
+    left: 24px;
+    right: 24px;
+    width: auto;
+    bottom: 110px;
+  }
+
+  .lobby-steps {
+    left: 24px;
+    right: 24px;
+    bottom: 24px;
+  }
+
+  .lobby-devises {
+    top: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lobby-title {
+    font-size: 40px;
+  }
+
+  .lobby-promise {
+    font-size: 16px;
+  }
+
+  .lobby-benefits li {
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lobby-in,
+  .lobby-stage,
+  .lobby-devises-track,
+  .lobby-horizon-glow {
+    animation: none;
+  }
+}
