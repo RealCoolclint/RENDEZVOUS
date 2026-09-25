@@ -182,7 +182,10 @@
 
     let actions = [];
     if (profil.statut === 'pending') {
-      actions = [{ label: 'VALIDER', action: 'activer' }];
+      actions = [
+        { label: 'VALIDER', action: 'activer' },
+        { label: 'SUPPRIMER', action: 'supprimer' }
+      ];
     } else if (profil.statut === 'active') {
       actions = [
         { label: 'MODIFIER', action: 'modifier' },
@@ -198,7 +201,7 @@
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'ps-connect-btn ps-connect-btn--drawer admin-detail-status-btn';
-      if (item.action === 'archiver') {
+      if (item.action === 'archiver' || item.action === 'supprimer') {
         btn.classList.add('admin-detail-status-btn--warning');
       }
       btn.dataset.action = item.action;
@@ -226,6 +229,9 @@
             previewEl.classList.add('admin-detail-action-preview--success');
           } else if (selectedAction === 'archiver') {
             previewEl.textContent = 'Action sélectionnée : archiver ce profil';
+            previewEl.classList.add('admin-detail-action-preview--warning');
+          } else if (selectedAction === 'supprimer') {
+            previewEl.textContent = 'Action sélectionnée : supprimer définitivement cette demande';
             previewEl.classList.add('admin-detail-action-preview--warning');
           } else if (selectedAction === 'reactiver') {
             previewEl.textContent = 'Action sélectionnée : réactiver ce profil';
@@ -406,6 +412,8 @@
           showToast('success', 'Profil réactivé.');
         } else if (selectedAction === 'archiver') {
           showToast('warning', 'Profil archivé.');
+        } else if (selectedAction === 'supprimer') {
+          showToast('warning', 'Demande supprimée.');
         } else if (selectedAction === 'modifier') {
           showToast('success', 'Affectation mise à jour.');
         }
