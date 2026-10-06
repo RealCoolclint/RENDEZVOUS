@@ -155,6 +155,7 @@
     <div class="lobby-actions lobby-in lobby-in--3">
       <button type="button" id="connect-trigger" class="lobby-cta" onclick="showProfileSelector(this)">Se connecter</button>
       <button type="button" id="inscription-trigger" class="lobby-ghost" onclick="openInscription(this)">Demander l’accès</button>
+      <button type="button" id="carousel-trigger" class="lobby-link" aria-haspopup="dialog" aria-controls="carousel-panel">Découvrir la flotte</button>
     </div>
   </div>
 
@@ -351,6 +352,44 @@
                 </div>
             </div>
         </aside>
+    </div>
+
+    <div id="carousel-panel" class="carousel-panel" role="dialog" aria-modal="true" aria-labelledby="carousel-title" hidden>
+      <div class="carousel-header">
+        <span id="carousel-title" class="carousel-title">La flotte</span>
+        <span id="carousel-counter" class="carousel-counter" aria-live="polite"></span>
+      </div>
+      <div class="carousel-stage">
+        <button type="button" id="carousel-prev" class="carousel-nav carousel-nav--prev" aria-label="Slide précédente">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div id="carousel-slide" class="carousel-slide">
+          <div class="carousel-media">
+            <video id="carousel-video" class="carousel-video" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+            <div id="carousel-placeholder" class="carousel-placeholder" aria-hidden="true" hidden></div>
+          </div>
+          <div class="carousel-info">
+            <div class="carousel-meta">
+              <span id="carousel-status" class="carousel-status"></span>
+              <span id="carousel-type" class="carousel-type"></span>
+            </div>
+            <h2 id="carousel-name" class="carousel-name"></h2>
+            <p id="carousel-motto" class="carousel-motto"></p>
+            <p id="carousel-translation" class="carousel-translation"></p>
+            <p id="carousel-hook" class="carousel-hook"></p>
+            <p id="carousel-body" class="carousel-body"></p>
+            <p class="carousel-for"><span class="carousel-for-label">Pour</span> <span id="carousel-for" class="carousel-for-value"></span></p>
+          </div>
+        </div>
+        <button type="button" id="carousel-next" class="carousel-nav carousel-nav--next" aria-label="Slide suivante">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div id="carousel-dots" class="carousel-dots" role="group" aria-label="Choisir une slide"></div>
+      <div class="carousel-actions">
+        <button type="button" id="carousel-connect" class="lobby-cta">Se connecter</button>
+        <button type="button" id="carousel-close" class="lobby-ghost">Fermer</button>
+      </div>
     </div>
 
     <script>
