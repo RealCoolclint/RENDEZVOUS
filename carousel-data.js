@@ -28,7 +28,7 @@ window.TranquilityFleet = Object.freeze([
     translation: 'Vite et bien.',
     mission: 'Organisation automatique des fichiers d’un projet Premiere Pro.',
     video: 'assets/patch-transporter.mp4',
-    poster: 'assets/patch-transporter.jpg'
+    poster: 'assets/patch-transporter.png'
   }),
   Object.freeze({
     id: 'reviewer',
