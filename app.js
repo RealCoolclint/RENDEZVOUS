@@ -105,6 +105,7 @@ const MagicLinkAuth = (() => {
   function logout(sessionExpired) {
     _stopSessionVerification();
     sessionStorage.removeItem(LS_KEY);
+    document.dispatchEvent(new CustomEvent('r6:logout'));
     const wrap = document.getElementById('top-bar-profile');
     if (wrap) wrap.style.display = 'none';
     showNotification(
@@ -732,6 +733,16 @@ const R6 = (() => {
     // Bascule vers la vue connectée
     switchView('connected');
     _bindCtas();
+
+    document.dispatchEvent(new CustomEvent('r6:ready', {
+      detail: {
+        niveau,
+        apps: userApps,
+        affectation,
+        email: session.email || null,
+        prenom: null
+      }
+    }));
   }
 
   function _bindCtas() {
