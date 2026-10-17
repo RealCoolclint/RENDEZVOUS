@@ -34,6 +34,7 @@
     preparation: 'En préparation'
   };
   const TRANSITION_FALLBACK_MS = 400;
+  const MEDIA_READY_MAX_MS = 600;
   const SWIPE_MIN_PX = 50;
   const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, video[controls], [tabindex]:not([tabindex="-1"])';
 
@@ -47,6 +48,8 @@
   let panelToken = 0;
   let changeToken = 0;
   let isChanging = false;
+  // Slide rendue sous le noir, en attente de son média avant le fondu de retour
+  let awaitingMedia = false;
   let targetIndex = 0;
 
   function prefersReducedMotion() {
@@ -86,12 +89,33 @@
     timer = setTimeout(finish, TRANSITION_FALLBACK_MS);
   }
 
-  // À compléter au prompt 5 (lecture, repli poster)
+  // Lecture refusée par le navigateur : le poster reste affiché, sans erreur console
+  function playVideo(video) {
+    try {
+      const promise = video.play();
+      if (promise && typeof promise.catch === 'function') promise.catch(function() {});
+    } catch (e) {}
+  }
+
+  function pauseVideo() {
+    if (els.video) els.video.pause();
+  }
+
+  function releaseVideo(video) {
+    video.pause();
+    if (video.hasAttribute('src')) {
+      video.removeAttribute('src');
+      video.load();
+    }
+  }
+
+  // La vidéo n'est chargée et lancée que panneau ouvert
   function renderMedia(entry) {
     const video = els.video;
     const placeholder = els.placeholder;
 
     if (entry.video === null) {
+      if (video) releaseVideo(video);
       if (placeholder) placeholder.removeAttribute('hidden');
       if (video) video.setAttribute('hidden', '');
       return;
@@ -101,7 +125,54 @@
     if (video) {
       video.removeAttribute('hidden');
       video.poster = entry.poster;
+      if (isOpen) {
+        video.src = entry.video;
+        video.load();
+        playVideo(video);
+      }
     }
+  }
+
+  // Appelle done une seule fois : média de entry prêt, ou timer de secours
+  function waitForMedia(entry, done) {
+    const video = els.video;
+    let finished = false;
+    let timer = null;
+    let img = null;
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      if (video) {
+        video.removeEventListener('loadeddata', finish);
+        video.removeEventListener('error', finish);
+      }
+      if (img) img.onload = img.onerror = null;
+      done();
+    }
+
+    if (entry.video !== null && video) {
+      if (video.readyState >= 2) {
+        finish();
+        return;
+      }
+      video.addEventListener('loadeddata', finish);
+      video.addEventListener('error', finish);
+    } else if (entry.poster) {
+      img = new Image();
+      img.onload = img.onerror = finish;
+      img.src = entry.poster;
+      if (img.complete) {
+        finish();
+        return;
+      }
+    } else {
+      finish();
+      return;
+    }
+
+    timer = setTimeout(finish, MEDIA_READY_MAX_MS);
   }
 
   function updateDots() {
@@ -138,7 +209,19 @@
   function cancelChange() {
     changeToken++;
     isChanging = false;
+    awaitingMedia = false;
     if (els.slide) els.slide.classList.remove('is-changing');
+  }
+
+  // Retire le noir quand le média de la slide courante est prêt, sauf si token est périmé
+  function revealWhenReady(token) {
+    awaitingMedia = true;
+    waitForMedia(fleet[current], function() {
+      if (token !== changeToken || !isOpen) return;
+      awaitingMedia = false;
+      els.slide.classList.remove('is-changing');
+      isChanging = false;
+    });
   }
 
   function goTo(index) {
@@ -146,6 +229,12 @@
 
     if (isChanging) {
       targetIndex = next;
+      if (awaitingMedia && next !== current) {
+        const token = ++changeToken;
+        current = next;
+        renderSlide();
+        revealWhenReady(token);
+      }
       return;
     }
     if (next === current) return;
@@ -165,8 +254,7 @@
       if (token !== changeToken) return;
       current = targetIndex;
       renderSlide();
-      els.slide.classList.remove('is-changing');
-      isChanging = false;
+      revealWhenReady(token);
     });
   }
 
@@ -209,6 +297,7 @@
     isOpen = false;
     const token = ++panelToken;
     const focusTarget = lastFocused;
+    pauseVideo();
 
     function finish() {
       if (token !== panelToken) return;
