@@ -20,6 +20,12 @@
   };
   const APP_URL_PREFIX = 'https://realcoolclint.github.io/';
   const DESKTOP_NOTE = 'Application installée sur ton Mac, ouverture depuis le portail bientôt disponible.';
+  const REQUIREMENT_FALLBACK = 'Affectation requise';
+  const REQUEST_LABEL = 'Demander une affectation';
+  const REQUEST_PENDING_LABEL = 'Envoi...';
+  const REQUEST_SENT_LABEL = 'Demande envoyée';
+  const REQUEST_SENT_MESSAGE = "Demande transmise — l'équipe Tranquility prend contact avec toi.";
+  const REQUEST_ERROR_MESSAGE = 'Erreur réseau, réessaie.';
   const TRANSITION_FALLBACK_MS = 400;
   const MEDIA_READY_MAX_MS = 600;
   // Bord extérieur du patch dans chaque vidéo, en % du demi-côté (mesuré sur images extraites, +1 % de marge).
@@ -47,6 +53,13 @@
   let changeToken = 0;
   let isChanging = false;
   let awaitingMedia = false;
+
+  // Demandes d'affectation : les envois réussis sont tracés par R6 (localStorage),
+  // seuls les envois en cours restent en mémoire, vidée au logout
+  let niveau = null;
+  let sessionId = 0;
+  let pendingRequests = new Set();
+  let previewRequest = null;
 
   function getScreen() {
     return document.getElementById('mainScreen');
@@ -447,6 +460,8 @@
     stage.status.setAttribute('data-state', item.state);
     setText(stage.type, app.type);
     stage.requirement.hidden = item.state !== 'locked';
+    const requirement = requirementOf(app);
+    setText(stage.requirement, requirement ? requirement.label : REQUIREMENT_FALLBACK);
     setText(stage.name, app.name || app.id);
     stage.name.setAttribute('data-initial', stage.name.textContent.trim().charAt(0).toUpperCase());
     setText(stage.motto, app.motto);
@@ -457,6 +472,65 @@
 
   function isAllowedAppUrl(url) {
     return typeof url === 'string' && url.indexOf(APP_URL_PREFIX) === 0;
+  }
+
+  // R6 (app.js) est la source de vérité des règles d'affectation
+  function requirementOf(app) {
+    if (typeof R6 === 'undefined' || !R6 || typeof R6.requirementFor !== 'function') return null;
+    return R6.requirementFor(app.id, niveau);
+  }
+
+  function sendRequest(appId) {
+    if (previewRequest) return previewRequest(appId);
+    if (typeof R6 === 'undefined' || !R6 || typeof R6.requestAffectation !== 'function') {
+      return Promise.resolve({ ok: false, error: REQUEST_ERROR_MESSAGE });
+    }
+    return R6.requestAffectation(appId);
+  }
+
+  function hasRequested(appId) {
+    if (typeof R6 === 'undefined' || !R6 || typeof R6.hasRequested !== 'function') return false;
+    return R6.hasRequested(appId);
+  }
+
+  function notify(message) {
+    if (typeof showNotification === 'function') showNotification(message);
+  }
+
+  function applyRequestState(button, appId) {
+    if (hasRequested(appId)) {
+      button.disabled = true;
+      button.textContent = REQUEST_SENT_LABEL;
+    } else if (pendingRequests.has(appId)) {
+      button.disabled = true;
+      button.textContent = REQUEST_PENDING_LABEL;
+    } else {
+      button.disabled = false;
+      button.textContent = REQUEST_LABEL;
+    }
+  }
+
+  function refreshRequestButton(appId) {
+    if (!stage || !currentItem || currentItem.app.id !== appId) return;
+    const button = stage.actions.querySelector('.main-cta--request');
+    if (button) applyRequestState(button, appId);
+  }
+
+  function requestAffectation(appId) {
+    if (pendingRequests.has(appId) || hasRequested(appId)) return;
+    const session = sessionId;
+    pendingRequests.add(appId);
+    refreshRequestButton(appId);
+
+    Promise.resolve(sendRequest(appId))
+      .catch(function() { return { ok: false, error: REQUEST_ERROR_MESSAGE }; })
+      .then(function(result) {
+        if (session !== sessionId) return;
+        pendingRequests.delete(appId);
+        const ok = !!(result && result.ok);
+        notify(ok ? REQUEST_SENT_MESSAGE : ((result && result.error) || REQUEST_ERROR_MESSAGE));
+        refreshRequestButton(appId);
+      });
   }
 
   // La note est conservée d'un rendu à l'autre : une région aria-live doit exister avant d'être remplie
@@ -495,6 +569,19 @@
       cta.className = 'main-cta main-cta--soon';
       cta.setAttribute('aria-disabled', 'true');
       cta.textContent = 'Bientôt dans la flotte';
+    } else if (item.state === 'locked') {
+      const requirement = requirementOf(app);
+      if (requirement && requirement.canRequest) {
+        cta = document.createElement('button');
+        cta.type = 'button';
+        cta.className = 'main-cta main-cta--request';
+        applyRequestState(cta, app.id);
+        cta.addEventListener('click', function() {
+          requestAffectation(app.id);
+        });
+      } else if (requirement) {
+        note.textContent = requirement.note;
+      }
     }
 
     if (cta) actions.insertBefore(cta, note);
@@ -764,10 +851,15 @@
     tiles = [];
     itemsById = {};
     selectedId = null;
+    niveau = null;
+    sessionId++;
+    pendingRequests = new Set();
   }
 
   document.addEventListener('r6:ready', function(e) {
-    render((e && e.detail) || {});
+    const detail = (e && e.detail) || {};
+    niveau = detail.niveau || null;
+    render(detail);
   });
   document.addEventListener('r6:logout', clear);
   document.addEventListener('visibilitychange', onPlaybackConditionsChange);
@@ -783,17 +875,53 @@
 
   // MODE APERÇU — local uniquement, ?preview=1
   const isLocalHost = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
-  const wantsPreview = new URLSearchParams(location.search).get('preview') === '1';
+  const previewParams = new URLSearchParams(location.search);
+  const wantsPreview = previewParams.get('preview') === '1';
   if (isLocalHost && wantsPreview) {
+    // &niveau=N1|N2|N3|N4 (N2 par défaut), &request=ok|fail (ok par défaut) ; aucun appel au proxy
+    const previewNiveau = /^N[1-4]$/.test(previewParams.get('niveau') || '') ? previewParams.get('niveau') : 'N2';
+    const previewRequestFails = previewParams.get('request') === 'fail';
+    previewRequest = function(appId) {
+      return new Promise(function(resolve) {
+        setTimeout(function() {
+          if (previewRequestFails) {
+            resolve({ ok: false, error: REQUEST_ERROR_MESSAGE });
+            return;
+          }
+          if (typeof R6 !== 'undefined' && R6 && typeof R6.markRequested === 'function') R6.markRequested(appId);
+          resolve({ ok: true });
+        }, 600);
+      });
+    };
+    // &reset=1 : efface les traces de demandes avant le premier affichage
+    if (previewParams.get('reset') === '1') {
+      try {
+        Object.keys(localStorage)
+          .filter(function(key) { return key.indexOf('ts_rdv_requested_') === 0; })
+          .forEach(function(key) { localStorage.removeItem(key); });
+      } catch (e) {}
+    }
+    const previewDetail = function() {
+      const fleetIds = (Array.isArray(window.TranquilityFleet) ? window.TranquilityFleet : [])
+        .map(function(app) { return app && app.id; })
+        .filter(Boolean);
+      if (previewNiveau === 'N1') {
+        return { apps: fleetIds.filter(function(id) { return id !== 'ark'; }), affectation: 'COLUMBIA' };
+      }
+      if (previewNiveau === 'N3') return { apps: ['covenant'], affectation: null };
+      if (previewNiveau === 'N4') return { apps: [], affectation: null };
+      return { apps: ['reviewer', 'manifest', 'codex'], affectation: 'GUMDROP' };
+    };
     const runPreview = function() {
       document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
       const connected = document.getElementById('connectedView');
       if (connected) connected.classList.add('active');
+      const data = previewDetail();
       document.dispatchEvent(new CustomEvent('r6:ready', {
         detail: {
-          niveau: 'N2',
-          apps: ['reviewer', 'manifest', 'codex'],
-          affectation: 'GUMDROP',
+          niveau: previewNiveau,
+          apps: data.apps,
+          affectation: data.affectation,
           email: 'preview@local',
           prenom: 'Antoine'
         }

@@ -778,7 +778,7 @@ const R6 = (() => {
           if (response.ok) {
             newBtn.disabled = true;
             newBtn.textContent = 'Demande envoyée';
-            showNotification("Demande transmise — l'équipage Tranquility prend contact avec toi.");
+            showNotification("Demande transmise — l'équipe Tranquility prend contact avec toi.");
             return;
           }
 
@@ -796,7 +796,107 @@ const R6 = (() => {
     });
   }
 
-  return { init };
+  // Affectations donnant accès à une app, dans l'ordre de APP_TO_AFFECTATIONS
+  function affectationsFor(appId) {
+    const noms = APP_TO_AFFECTATIONS[appId] || [];
+    return noms.map(function(nom) {
+      const info = AFFECTATIONS[nom] || {};
+      return { nom, niveau: info.niveau || null, metier: info.metier || null };
+    });
+  }
+
+  // Exigence d'une app verrouillée — mêmes règles que _renderCard
+  function requirementFor(appId, niveau) {
+    if (niveau === 'N4') {
+      return { label: 'Accès individuel requis', canRequest: false, note: 'Accès en lecture — aucune action requise' };
+    }
+    if (niveau === 'N3') {
+      return { label: 'Accès individuel requis', canRequest: true, note: '' };
+    }
+    const principale = (APP_TO_AFFECTATIONS[appId] || [])[0] || null;
+    return {
+      label: principale ? 'Affectation ' + principale + ' requise' : 'Affectation requise',
+      canRequest: true,
+      note: ''
+    };
+  }
+
+  // Traces de demandes envoyées : localStorage, une clé par utilisateur, { appId: horodatage ISO }
+  // Conservées au logout ; périmées après REQUEST_COOLDOWN_MS
+  const REQUEST_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+  const REQUESTED_KEY_PREFIX = 'ts_rdv_requested_';
+
+  function _requestedKey() {
+    let sub = null;
+    try {
+      const session = JSON.parse(sessionStorage.getItem('ts_session_rendezvous'));
+      const payload = session && session.token ? _decodeJwt(session.token) : null;
+      if (payload && payload.sub != null) sub = String(payload.sub);
+    } catch {}
+    // Jamais d'adresse e-mail dans la clé
+    if (!sub || sub.indexOf('@') !== -1) sub = 'anonymous';
+    return REQUESTED_KEY_PREFIX + sub;
+  }
+
+  function _readRequested(key) {
+    const data = JSON.parse(localStorage.getItem(key) || '{}');
+    return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+  }
+
+  function hasRequested(appId) {
+    try {
+      const key = _requestedKey();
+      const data = _readRequested(key);
+      if (!Object.prototype.hasOwnProperty.call(data, appId)) return false;
+      const age = Date.now() - Date.parse(data[appId]);
+      if (age >= 0 && age < REQUEST_COOLDOWN_MS) return true;
+      delete data[appId];
+      if (Object.keys(data).length) localStorage.setItem(key, JSON.stringify(data));
+      else localStorage.removeItem(key);
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  function markRequested(appId) {
+    try {
+      const key = _requestedKey();
+      const data = _readRequested(key);
+      data[appId] = new Date().toISOString();
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch {}
+  }
+
+  // Même POST que _bindCtas — ne lance jamais d'exception
+  async function requestAffectation(appId) {
+    try {
+      const raw = sessionStorage.getItem('ts_session_rendezvous');
+      const session = JSON.parse(raw);
+      const token = session && session.token;
+
+      const response = await fetch(REQUEST_AFFECTATION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, appId })
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+
+      if (response.ok) {
+        markRequested(appId);
+        return { ok: true, error: null };
+      }
+      return { ok: false, error: (data && data.error) ? data.error : 'Erreur réseau, réessaie.' };
+    } catch (_) {
+      return { ok: false, error: 'Erreur réseau, réessaie.' };
+    }
+  }
+
+  return { init, affectationsFor, requirementFor, requestAffectation, hasRequested, markRequested };
 
 })();
 

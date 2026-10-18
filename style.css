@@ -3666,6 +3666,28 @@ body:has(#mainView.active) .top-bar-brand {
   cursor: default;
 }
 
+.main-cta--request {
+  border-color: var(--border-hover);
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.main-cta--request:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.main-cta--request:disabled,
+.main-cta--request:disabled:hover {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--text-tertiary);
+  box-shadow: none;
+  cursor: default;
+}
+
 .main-actions-note {
   flex: 1 1 0;
   min-width: 0;
