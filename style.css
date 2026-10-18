@@ -3077,12 +3077,12 @@ body:has(#mainView.active) .top-bar-brand {
    Préfixe main- (ne pas cibler .app-grid, .app-card, .affectation-cta ni .fleet-*)
    ============================================ */
 .main-screen {
-  --main-tile-size: 92px;
-  --main-tile-size-selected: 136px;
+  --main-tile-size-selected: clamp(72px, 11vh, 136px);
+  --main-tile-size: calc(var(--main-tile-size-selected) * 0.68);
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 24px clamp(16px, 4vw, 48px) 32px;
+  padding: clamp(4px, 1vh, 12px) clamp(16px, 4vw, 48px) clamp(12px, 2.5vh, 32px);
   background: var(--bg-void);
   color: var(--text-primary);
   font-family: 'Lato', sans-serif;
@@ -3091,7 +3091,7 @@ body:has(#mainView.active) .top-bar-brand {
 .main-row {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(8px, 1.6vh, 24px);
   width: min(1240px, 100%);
   margin: 0 auto;
 }
@@ -3185,8 +3185,8 @@ body:has(#mainView.active) .top-bar-brand {
   display: flex;
   align-items: flex-start;
   gap: clamp(14px, 2vw, 28px);
-  min-height: calc(var(--main-tile-size-selected) + 64px);
-  padding: 12px 8px 8px;
+  min-height: calc(var(--main-tile-size-selected) + 56px);
+  padding: 10px 8px 6px;
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
@@ -3290,11 +3290,12 @@ body:has(#mainView.active) .top-bar-brand {
 }
 
 .main-tile-fallback {
-  padding: 0 10px;
+  padding: 0 4px;
   font-family: 'Lato', sans-serif;
   font-weight: 700;
-  font-size: 10px;
-  letter-spacing: 2px;
+  font-size: 8px;
+  letter-spacing: 1px;
+  white-space: nowrap;
   text-transform: uppercase;
   text-align: center;
   color: var(--text-secondary);
@@ -3345,29 +3346,35 @@ body:has(#mainView.active) .top-bar-brand {
 }
 
 /* Scène (patch animé) et fiche — étape C */
+/* Hauteur visible de .main-content : 100dvh moins la marge de .app-container (40px)
+   et la .top-bar (80px) ; le .connected-header est masqué plus bas */
 .main-screen:has(.main-stage) {
-  min-height: calc(100vh - 80px);
+  --main-offset-top: 120px;
+  height: calc(100dvh - var(--main-offset-top));
+  min-height: 0;
 }
 
 .main-stage {
   position: relative;
   isolation: isolate;
-  flex: 1 1 auto;
-  display: flex;
-  align-items: flex-end;
+  flex: 1 1 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  column-gap: clamp(16px, 3vw, 48px);
   width: min(1240px, 100%);
-  min-height: clamp(420px, 60vh, 760px);
-  margin: 8px auto 0;
+  min-height: 0;
+  margin: clamp(4px, 1vh, 8px) auto 0;
   overflow: hidden;
 }
 
 .main-scene {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
   z-index: 0;
-  width: min(62%, 760px);
+  min-width: 0;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3377,7 +3384,7 @@ body:has(#mainView.active) .top-bar-brand {
 
 .main-scene-media {
   position: relative;
-  width: min(100cqw, 92cqh);
+  width: min(100cqw, 100cqh);
   aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
@@ -3391,12 +3398,22 @@ body:has(#mainView.active) .top-bar-brand {
   display: none;
 }
 
+/* Le masque ne garde que le disque du patch : le fond carré de certaines vidéos (CODEX) disparaît.
+   --main-patch-edge vient de PATCH_EDGES (main-screen.js) ; seule l'opacité du masque compte. */
 .main-scene-video {
+  --main-patch-edge: 100%;
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
   background: var(--bg-void);
+  -webkit-mask-image: radial-gradient(circle closest-side at 50% 50%, var(--bg-void) calc(var(--main-patch-edge) - 0.5%), transparent calc(var(--main-patch-edge) + 1%));
+  mask-image: radial-gradient(circle closest-side at 50% 50%, var(--bg-void) calc(var(--main-patch-edge) - 0.5%), transparent calc(var(--main-patch-edge) + 1%));
+}
+
+/* Ancien en-tête de la page connectée R6 (index.html, .connected-header) : doublon de la top-bar */
+#connectedView:has(> #mainScreen) > .connected-header {
+  display: none;
 }
 
 .main-scene-img {
@@ -3458,10 +3475,14 @@ body:has(#mainView.active) .top-bar-brand {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
-  max-width: min(620px, 100%);
-  padding: 0 0 8px;
+  gap: clamp(6px, 1vh, 10px);
+  grid-column: 1;
+  grid-row: 1;
+  align-self: end;
+  max-width: 100%;
+  padding: 0 0 4px;
   min-width: 0;
+  container-type: inline-size;
   transition: opacity var(--transition);
 }
 
@@ -3525,16 +3546,18 @@ body:has(#mainView.active) .top-bar-brand {
   border: none;
   font-family: 'Lato', sans-serif;
   font-weight: 900;
-  font-size: clamp(44px, 7vw, 104px);
+  /* TRANSPORTER, le plus large, mesure 7,42em : 12.5cqw tient dans la fiche */
+  font-size: min(12.5cqw, 11vh, 120px);
   line-height: 0.95;
-  letter-spacing: 2px;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--text-primary);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 .main-sheet-motto {
-  margin: 8px 0 0;
+  margin: clamp(2px, 0.6vh, 8px) 0 0;
   font-family: 'Lato', sans-serif;
   font-style: italic;
   font-weight: 700;
@@ -3544,20 +3567,29 @@ body:has(#mainView.active) .top-bar-brand {
   color: var(--text-primary);
 }
 
+/* body impose text-transform: uppercase à tout le site : les paragraphes s'en libèrent ici */
 .main-sheet-translation {
   margin: 0;
   font-family: 'Lato', sans-serif;
   font-size: 13px;
+  text-transform: none;
   color: var(--text-secondary);
 }
 
 .main-sheet-mission {
-  margin: 10px 0 0;
+  margin: clamp(2px, 0.8vh, 10px) 0 0;
   max-width: 52ch;
   font-family: 'Lato', sans-serif;
   font-size: 15px;
-  line-height: 1.65;
+  line-height: 1.55;
+  text-transform: none;
   color: var(--text-secondary);
+}
+
+.main-actions {
+  align-self: stretch;
+  min-height: 52px;
+  margin-top: 10px;
 }
 
 @media (max-width: 760px) {
@@ -3573,9 +3605,14 @@ body:has(#mainView.active) .top-bar-brand {
     padding: 12px 16px 8px;
     scroll-padding-inline: 16px;
   }
+  .main-screen:has(.main-stage) {
+    height: auto;
+  }
   .main-stage {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
+    flex: 0 0 auto;
     min-height: 0;
     padding: 0 16px;
   }
@@ -3591,11 +3628,12 @@ body:has(#mainView.active) .top-bar-brand {
     background: linear-gradient(to top, var(--bg-void) 0%, transparent 35%);
   }
   .main-sheet {
+    align-self: stretch;
     max-width: 100%;
     margin-top: 16px;
   }
   .main-sheet-name {
-    font-size: clamp(36px, 11vw, 56px);
+    font-size: min(12.5cqw, 56px);
   }
 }
 

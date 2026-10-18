@@ -20,6 +20,18 @@
   };
   const TRANSITION_FALLBACK_MS = 400;
   const MEDIA_READY_MAX_MS = 600;
+  // Bord extérieur du patch dans chaque vidéo, en % du demi-côté (mesuré sur images extraites, +1 % de marge).
+  // À remesurer si une vidéo de patch change.
+  const PATCH_EDGES = {
+    ark: 99,
+    backupflow: 101,
+    codex: 95,
+    covenant: 78,
+    manifest: 93,
+    reviewer: 101,
+    rover: 97,
+    transporter: 101
+  };
 
   let selectedId = null;
   let tiles = [];
@@ -389,6 +401,8 @@
     translation.className = 'main-sheet-translation';
     const mission = document.createElement('p');
     mission.className = 'main-sheet-mission';
+    const actions = document.createElement('div');
+    actions.className = 'main-actions';
 
     sheet.appendChild(meta);
     sheet.appendChild(requirement);
@@ -396,6 +410,7 @@
     sheet.appendChild(motto);
     sheet.appendChild(translation);
     sheet.appendChild(mission);
+    sheet.appendChild(actions);
 
     root.appendChild(scene);
     root.appendChild(veil);
@@ -440,6 +455,11 @@
       img.removeAttribute('src');
       placeholder.hidden = true;
       releaseVideo(video);
+      if (PATCH_EDGES[app.id]) {
+        video.style.setProperty('--main-patch-edge', PATCH_EDGES[app.id] + '%');
+      } else {
+        video.style.removeProperty('--main-patch-edge');
+      }
       video.hidden = false;
       video.poster = app.poster || '';
       if (canPlay()) {
