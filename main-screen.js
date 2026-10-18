@@ -448,6 +448,7 @@
     setText(stage.type, app.type);
     stage.requirement.hidden = item.state !== 'locked';
     setText(stage.name, app.name || app.id);
+    stage.name.setAttribute('data-initial', stage.name.textContent.trim().charAt(0).toUpperCase());
     setText(stage.motto, app.motto);
     setText(stage.translation, app.translation);
     setText(stage.mission, app.mission);

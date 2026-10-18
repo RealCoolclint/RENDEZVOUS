@@ -3085,6 +3085,8 @@ body:has(#mainView.active) .top-bar-brand {
   --main-brand-logo: 36px;
   --main-brand-gap: 10px;
   --main-text-offset: calc(var(--main-brand-logo) + var(--main-brand-gap));
+  --main-name-bearing-stem: 0.06em;
+  --main-name-bearing-round: 0.02em;
   --main-pad-bottom: clamp(12px, 2.5vh, 32px);
   --main-tile-size-selected: clamp(72px, 11vh, 136px);
   --main-tile-size: calc(var(--main-tile-size-selected) * 0.68);
@@ -3566,6 +3568,21 @@ body:has(#mainView.active) .top-bar-brand {
   color: var(--text-primary);
   white-space: nowrap;
   overflow-wrap: normal;
+}
+
+/* Alignement optique : on retire l'approche gauche de la première lettre (mesurée en Lato 900, en em
+   pour suivre la taille du nom). Une initiale non listée ne reçoit aucune correction */
+.main-sheet-name[data-initial="B"], .main-sheet-name[data-initial="D"], .main-sheet-name[data-initial="E"],
+.main-sheet-name[data-initial="F"], .main-sheet-name[data-initial="H"], .main-sheet-name[data-initial="I"],
+.main-sheet-name[data-initial="K"], .main-sheet-name[data-initial="L"], .main-sheet-name[data-initial="M"],
+.main-sheet-name[data-initial="N"], .main-sheet-name[data-initial="P"], .main-sheet-name[data-initial="R"],
+.main-sheet-name[data-initial="U"] {
+  margin-left: calc(-1 * var(--main-name-bearing-stem));
+}
+
+.main-sheet-name[data-initial="C"], .main-sheet-name[data-initial="G"], .main-sheet-name[data-initial="O"],
+.main-sheet-name[data-initial="Q"], .main-sheet-name[data-initial="Z"] {
+  margin-left: calc(-1 * var(--main-name-bearing-round));
 }
 
 .main-sheet-motto {
