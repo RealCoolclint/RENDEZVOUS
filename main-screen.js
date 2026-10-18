@@ -1,5 +1,5 @@
 // ============================================================
-// ÉCRAN PRINCIPAL — ÉTAPE B : RANGÉE DE TUILES
+// ÉCRAN PRINCIPAL — ÉTAPES B ET C : RANGÉE DE TUILES, SCÈNE ET FICHE
 // Données : window.TranquilityFleet (carousel-data.js)
 // Entrées : document 'r6:ready' / 'r6:logout' (app.js)
 // Sortie  : document 'main:select' { id }
@@ -13,13 +13,33 @@
     locked: 'Verrouillée',
     preparation: 'En préparation'
   };
+  const SHEET_STATUS_LABELS = {
+    open: 'Disponible',
+    locked: 'Verrouillée',
+    preparation: 'En préparation'
+  };
+  const TRANSITION_FALLBACK_MS = 400;
+  const MEDIA_READY_MAX_MS = 600;
 
   let selectedId = null;
   let tiles = [];
+  let itemsById = {};
   let els = null;
 
+  // Scène et fiche : même mécanique de fondu que carousel.js
+  let stage = null;
+  let currentItem = null;
+  let targetItem = null;
+  let changeToken = 0;
+  let isChanging = false;
+  let awaitingMedia = false;
+
+  function getScreen() {
+    return document.getElementById('mainScreen');
+  }
+
   function getHost() {
-    const screen = document.getElementById('mainScreen');
+    const screen = getScreen();
     return screen ? screen.querySelector('.main-row-host') : null;
   }
 
@@ -201,6 +221,358 @@
     return { root: root, title: title, subtitle: subtitle, counter: counter, group: group };
   }
 
+  // ---------- Scène et fiche ----------
+
+  function setText(el, value) {
+    if (el) el.textContent = value == null ? '' : String(value);
+  }
+
+  function carouselIsOpen() {
+    const panel = document.getElementById('carousel-panel');
+    return !!panel && !panel.hasAttribute('hidden');
+  }
+
+  function canPlay() {
+    return !document.hidden && !carouselIsOpen();
+  }
+
+  // Lecture refusée par le navigateur : le poster reste affiché, sans erreur console
+  function playVideo(video) {
+    try {
+      const promise = video.play();
+      if (promise && typeof promise.catch === 'function') promise.catch(function() {});
+    } catch (e) {}
+  }
+
+  function releaseVideo(video) {
+    video.pause();
+    if (video.hasAttribute('src')) {
+      video.removeAttribute('src');
+      video.load();
+    }
+  }
+
+  // Appelle done une seule fois : fin de la transition d'opacité de el, ou timer de secours
+  function waitForOpacityTransition(el, done) {
+    let finished = false;
+    let timer = null;
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      el.removeEventListener('transitionend', onEnd);
+      done();
+    }
+
+    function onEnd(e) {
+      if (e.target === el && e.propertyName === 'opacity') finish();
+    }
+
+    el.addEventListener('transitionend', onEnd);
+    timer = setTimeout(finish, TRANSITION_FALLBACK_MS);
+  }
+
+  // Appelle done une seule fois : média de app prêt, ou timer de secours
+  function waitForMedia(app, done) {
+    const video = stage.video;
+    let finished = false;
+    let timer = null;
+    let img = null;
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      video.removeEventListener('loadeddata', finish);
+      video.removeEventListener('error', finish);
+      if (img) img.onload = img.onerror = null;
+      done();
+    }
+
+    if (app.video) {
+      if (video.readyState >= 2) {
+        finish();
+        return;
+      }
+      video.addEventListener('loadeddata', finish);
+      video.addEventListener('error', finish);
+    } else if (app.poster) {
+      img = new Image();
+      img.onload = img.onerror = finish;
+      img.src = app.poster;
+      if (img.complete) {
+        finish();
+        return;
+      }
+    } else {
+      finish();
+      return;
+    }
+
+    timer = setTimeout(finish, MEDIA_READY_MAX_MS);
+  }
+
+  function buildStage() {
+    const root = document.createElement('div');
+    root.className = 'main-stage';
+
+    const scene = document.createElement('div');
+    scene.className = 'main-scene';
+    scene.setAttribute('aria-hidden', 'true');
+
+    const media = document.createElement('div');
+    media.className = 'main-scene-media';
+
+    const video = document.createElement('video');
+    video.className = 'main-scene-video';
+    video.muted = true;
+    video.defaultMuted = true;
+    video.loop = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.preload = 'metadata';
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('disablepictureinpicture', '');
+    video.hidden = true;
+
+    const img = document.createElement('img');
+    img.className = 'main-scene-img';
+    img.alt = '';
+    img.decoding = 'async';
+    img.draggable = false;
+    img.hidden = true;
+
+    const placeholder = document.createElement('div');
+    placeholder.className = 'main-scene-placeholder';
+    placeholder.hidden = true;
+    const placeholderName = document.createElement('span');
+    placeholderName.className = 'main-scene-placeholder-name';
+    const placeholderNote = document.createElement('span');
+    placeholderNote.className = 'main-scene-placeholder-note';
+    placeholderNote.textContent = 'Patch de mission en production';
+    placeholder.appendChild(placeholderName);
+    placeholder.appendChild(placeholderNote);
+
+    media.appendChild(video);
+    media.appendChild(img);
+    media.appendChild(placeholder);
+    scene.appendChild(media);
+
+    const veil = document.createElement('div');
+    veil.className = 'main-veil';
+    veil.setAttribute('aria-hidden', 'true');
+
+    const sheet = document.createElement('div');
+    sheet.className = 'main-sheet';
+
+    const meta = document.createElement('div');
+    meta.className = 'main-sheet-meta';
+    const status = document.createElement('span');
+    status.className = 'main-sheet-status';
+    const type = document.createElement('span');
+    type.className = 'main-sheet-type';
+    meta.appendChild(status);
+    meta.appendChild(type);
+
+    const requirement = document.createElement('p');
+    requirement.className = 'main-sheet-requirement';
+    requirement.textContent = 'Affectation requise';
+    requirement.hidden = true;
+
+    const name = document.createElement('h3');
+    name.className = 'main-sheet-name';
+    const motto = document.createElement('p');
+    motto.className = 'main-sheet-motto';
+    const translation = document.createElement('p');
+    translation.className = 'main-sheet-translation';
+    const mission = document.createElement('p');
+    mission.className = 'main-sheet-mission';
+
+    sheet.appendChild(meta);
+    sheet.appendChild(requirement);
+    sheet.appendChild(name);
+    sheet.appendChild(motto);
+    sheet.appendChild(translation);
+    sheet.appendChild(mission);
+
+    root.appendChild(scene);
+    root.appendChild(veil);
+    root.appendChild(sheet);
+
+    return {
+      root: root, scene: scene, video: video, img: img,
+      placeholder: placeholder, placeholderName: placeholderName,
+      status: status, type: type, requirement: requirement,
+      name: name, motto: motto, translation: translation, mission: mission
+    };
+  }
+
+  function ensureStage() {
+    if (stage) return stage;
+    const screen = getScreen();
+    if (!screen) return null;
+    stage = buildStage();
+    screen.appendChild(stage.root);
+    return stage;
+  }
+
+  function renderSheet(item) {
+    const app = item.app;
+    stage.status.textContent = SHEET_STATUS_LABELS[item.state];
+    stage.status.setAttribute('data-state', item.state);
+    setText(stage.type, app.type);
+    stage.requirement.hidden = item.state !== 'locked';
+    setText(stage.name, app.name || app.id);
+    setText(stage.motto, app.motto);
+    setText(stage.translation, app.translation);
+    setText(stage.mission, app.mission);
+  }
+
+  function renderMedia(app) {
+    const video = stage.video;
+    const img = stage.img;
+    const placeholder = stage.placeholder;
+
+    if (app.video) {
+      img.hidden = true;
+      img.removeAttribute('src');
+      placeholder.hidden = true;
+      releaseVideo(video);
+      video.hidden = false;
+      video.poster = app.poster || '';
+      if (canPlay()) {
+        video.src = app.video;
+        video.load();
+        playVideo(video);
+      }
+      return;
+    }
+
+    releaseVideo(video);
+    video.hidden = true;
+    video.removeAttribute('poster');
+
+    if (app.poster) {
+      placeholder.hidden = true;
+      img.src = app.poster;
+      img.hidden = false;
+      return;
+    }
+
+    img.hidden = true;
+    img.removeAttribute('src');
+    setText(stage.placeholderName, app.name || app.id);
+    placeholder.hidden = false;
+  }
+
+  function renderStage() {
+    renderSheet(currentItem);
+    renderMedia(currentItem.app);
+  }
+
+  function cancelChange() {
+    changeToken++;
+    isChanging = false;
+    awaitingMedia = false;
+    if (stage) stage.root.classList.remove('is-changing');
+  }
+
+  // Retire le noir quand le média de l'app courante est prêt, sauf si token est périmé
+  function revealWhenReady(token) {
+    awaitingMedia = true;
+    waitForMedia(currentItem.app, function() {
+      if (token !== changeToken || !stage) return;
+      awaitingMedia = false;
+      stage.root.classList.remove('is-changing');
+      isChanging = false;
+    });
+  }
+
+  function showOnStage(item) {
+    if (!item || !ensureStage()) return;
+    const sameApp = !!currentItem && currentItem.app.id === item.app.id;
+
+    if (isChanging) {
+      targetItem = item;
+      if (awaitingMedia && !sameApp) {
+        const token = ++changeToken;
+        currentItem = item;
+        renderStage();
+        revealWhenReady(token);
+      } else if (sameApp) {
+        currentItem = item;
+        renderSheet(item);
+      }
+      return;
+    }
+
+    if (sameApp) {
+      currentItem = item;
+      renderSheet(item);
+      return;
+    }
+
+    const token = ++changeToken;
+    targetItem = item;
+
+    if (prefersReducedMotion()) {
+      currentItem = item;
+      renderStage();
+      return;
+    }
+
+    isChanging = true;
+    stage.root.classList.add('is-changing');
+
+    if (!currentItem) {
+      currentItem = item;
+      renderStage();
+      revealWhenReady(token);
+      return;
+    }
+
+    waitForOpacityTransition(stage.scene, function() {
+      if (token !== changeToken) return;
+      currentItem = targetItem;
+      renderStage();
+      revealWhenReady(token);
+    });
+  }
+
+  function clearStage() {
+    cancelChange();
+    if (stage) {
+      releaseVideo(stage.video);
+      stage.root.remove();
+    }
+    stage = null;
+    currentItem = null;
+    targetItem = null;
+  }
+
+  function pauseStageVideo() {
+    if (stage) stage.video.pause();
+  }
+
+  function resumeStageVideo() {
+    if (!stage || !currentItem || !currentItem.app.video || !canPlay()) return;
+    const video = stage.video;
+    if (!video.hasAttribute('src')) {
+      video.src = currentItem.app.video;
+      video.load();
+    }
+    playVideo(video);
+  }
+
+  function onPlaybackConditionsChange() {
+    if (canPlay()) resumeStageVideo();
+    else pauseStageVideo();
+  }
+
+  // ---------- Rangée ----------
+
   function indexOfSelected() {
     for (let i = 0; i < tiles.length; i++) {
       if (tiles[i].dataset.appId === selectedId) return i;
@@ -241,6 +613,7 @@
       const tile = tiles[indexOfSelected()];
       if (tile) tile.focus({ preventScroll: true });
     }
+    showOnStage(itemsById[id]);
     if (changed) {
       document.dispatchEvent(new CustomEvent('main:select', { detail: { id: id } }));
     }
@@ -282,6 +655,8 @@
     const userApps = Array.isArray(detail.apps) ? detail.apps : [];
     const items = orderedApps(userApps);
     const openCount = items.filter(function(item) { return item.state === 'open'; }).length;
+    itemsById = {};
+    items.forEach(function(item) { itemsById[item.app.id] = item; });
 
     const hadFocus = !!(els && els.group.contains(document.activeElement));
 
@@ -297,6 +672,7 @@
     if (tiles.length === 0) {
       selectedId = null;
       els.counter.textContent = '00 / 00';
+      clearStage();
       return;
     }
 
@@ -307,8 +683,10 @@
   function clear() {
     const host = getHost();
     if (host) host.replaceChildren();
+    clearStage();
     els = null;
     tiles = [];
+    itemsById = {};
     selectedId = null;
   }
 
@@ -316,6 +694,16 @@
     render((e && e.detail) || {});
   });
   document.addEventListener('r6:logout', clear);
+  document.addEventListener('visibilitychange', onPlaybackConditionsChange);
+
+  // Le panneau du carrousel est un calque fixe : sa vidéo et celle de la scène ne doivent pas jouer ensemble
+  const carouselPanel = document.getElementById('carousel-panel');
+  if (carouselPanel && typeof MutationObserver === 'function') {
+    new MutationObserver(onPlaybackConditionsChange).observe(carouselPanel, {
+      attributes: true,
+      attributeFilter: ['hidden']
+    });
+  }
 
   // MODE APERÇU — local uniquement, ?preview=1
   const isLocalHost = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
