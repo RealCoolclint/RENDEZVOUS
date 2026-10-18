@@ -16,7 +16,9 @@ window.TranquilityFleet = Object.freeze([
     video: 'assets/patch-backupflow.mp4',
     poster: 'assets/patch-backupflow.png',
     platform: 'desktop',
-    url: null
+    url: null,
+    detail: 'Au retour de tournage, les rushes sont copiés et compressés vers le NAS, deux SSD et le cloud en une seule opération. L’app pionnière de la Suite.',
+    platformNote: 'Application de bureau, installée sur les Mac de la Cellule Vidéo.'
   }),
   Object.freeze({
     id: 'transporter',
@@ -32,7 +34,9 @@ window.TranquilityFleet = Object.freeze([
     video: 'assets/patch-transporter.mp4',
     poster: 'assets/patch-transporter.png',
     platform: 'desktop',
-    url: null
+    url: null,
+    detail: 'Rassemble et range tous les médias d’un projet Premiere pour qu’il voyage d’un poste à l’autre sans média manquant.',
+    platformNote: 'Application de bureau, pensée pour Adobe Premiere Pro.'
   }),
   Object.freeze({
     id: 'reviewer',
@@ -48,7 +52,9 @@ window.TranquilityFleet = Object.freeze([
     video: 'assets/patch-reviewer.mp4',
     poster: 'assets/patch-reviewer.png',
     platform: 'web',
-    url: 'https://realcoolclint.github.io/Reviewer/'
+    url: 'https://realcoolclint.github.io/Reviewer/',
+    detail: 'Chaque montage se relit et s’annote au timecode près, par toutes les personnes concernées, avant publication.',
+    platformNote: 'S’ouvre dans le navigateur, depuis n’importe quel poste.'
   }),
   Object.freeze({
     id: 'manifest',
@@ -64,7 +70,9 @@ window.TranquilityFleet = Object.freeze([
     video: 'assets/patch-manifest.mp4',
     poster: 'assets/patch-manifest.png',
     platform: 'web',
-    url: 'https://realcoolclint.github.io/Manifest/'
+    url: 'https://realcoolclint.github.io/Manifest/',
+    detail: 'Le tournage planifié dans Monday devient une feuille de service prête à partager, sans ressaisie.',
+    platformNote: 'S’ouvre dans le navigateur, depuis n’importe quel poste.'
   }),
   Object.freeze({
     id: 'ark',
@@ -80,7 +88,9 @@ window.TranquilityFleet = Object.freeze([
     video: 'assets/patch-ark.mp4',
     poster: 'assets/patch-ark.png',
     platform: 'desktop',
-    url: null
+    url: null,
+    detail: 'Compresse les vidéos et emballe le projet livré pour l’archive, et met Monday à jour au passage.',
+    platformNote: 'Application de bureau, installée sur les Mac de la Cellule Vidéo.'
   }),
   Object.freeze({
     id: 'rover',
@@ -96,7 +106,9 @@ window.TranquilityFleet = Object.freeze([
     video: 'assets/patch-rover.mp4',
     poster: 'assets/patch-rover.png',
     platform: 'desktop',
-    url: null
+    url: null,
+    detail: 'Récupère une vidéo de référence à partir d’un simple lien, dans le bon format, rangée au bon endroit.',
+    platformNote: 'Application de bureau, installée sur les Mac de la Cellule Vidéo.'
   }),
   Object.freeze({
     id: 'covenant',
@@ -112,7 +124,9 @@ window.TranquilityFleet = Object.freeze([
     video: 'assets/patch-covenant.mp4',
     poster: 'assets/patch-covenant.png',
     platform: 'web',
-    url: 'https://realcoolclint.github.io/COVENANT/'
+    url: 'https://realcoolclint.github.io/COVENANT/',
+    detail: 'Les autorisations de droit à l’image se signent sur place, au doigt, et partent directement au bon destinataire.',
+    platformNote: 'S’installe sur téléphone ou tablette, fonctionne sur le terrain.'
   }),
   Object.freeze({
     id: 'codex',
@@ -128,7 +142,9 @@ window.TranquilityFleet = Object.freeze([
     video: 'assets/patch-codex.mp4',
     poster: 'assets/patch-codex.png',
     platform: 'web',
-    url: 'https://realcoolclint.github.io/CODEX/'
+    url: 'https://realcoolclint.github.io/CODEX/',
+    detail: 'Un script de rédaction donne deux documents prêts à l’emploi : le texte du prompteur et la fiche de montage.',
+    platformNote: 'S’ouvre dans le navigateur, depuis n’importe quel poste.'
   }),
   Object.freeze({
     id: 'readback',
@@ -144,6 +160,8 @@ window.TranquilityFleet = Object.freeze([
     video: null,
     poster: null,
     platform: 'soon',
-    url: null
+    url: null,
+    detail: 'Le script défile sur l’écran du présentateur, piloté depuis un autre appareil. En préparation.',
+    platformNote: 'Application de bureau et écrans mobiles synchronisés.'
   })
 ]);

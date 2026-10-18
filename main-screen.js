@@ -26,6 +26,10 @@
   const REQUEST_SENT_LABEL = 'Demande envoyée';
   const REQUEST_SENT_MESSAGE = "Demande transmise — l'équipe Tranquility prend contact avec toi.";
   const REQUEST_ERROR_MESSAGE = 'Erreur réseau, réessaie.';
+  const DETAILS_ID = 'main-details';
+  const DETAILS_OPEN_LABEL = 'Détails';
+  const DETAILS_CLOSE_LABEL = 'Replier les détails';
+  const DETAILS_EMPTY_AFFECTATION = 'À définir';
   const TRANSITION_FALLBACK_MS = 400;
   const MEDIA_READY_MAX_MS = 600;
   // Bord extérieur du patch dans chaque vidéo, en % du demi-côté (mesuré sur images extraites, +1 % de marge).
@@ -60,6 +64,9 @@
   let sessionId = 0;
   let pendingRequests = new Set();
   let previewRequest = null;
+
+  // Panneau Détails : reste ouvert d'une app à l'autre, refermé au logout et par Échap
+  let detailsOpen = false;
 
   function getScreen() {
     return document.getElementById('mainScreen');
@@ -432,17 +439,147 @@
     sheet.appendChild(mission);
     sheet.appendChild(actions);
 
+    const details = buildDetails();
+
     root.appendChild(scene);
     root.appendChild(veil);
     root.appendChild(sheet);
+    root.appendChild(details.root);
 
     return {
       root: root, scene: scene, video: video, img: img,
       placeholder: placeholder, placeholderName: placeholderName,
       status: status, type: type, requirement: requirement,
       name: name, motto: motto, translation: translation, mission: mission,
-      actions: actions, note: note
+      actions: actions, note: note, details: details
     };
+  }
+
+  function detailsColumn(label) {
+    const col = document.createElement('div');
+    col.className = 'main-details-col';
+    const title = document.createElement('h4');
+    title.className = 'main-details-label';
+    title.textContent = label;
+    col.appendChild(title);
+    return col;
+  }
+
+  function detailsText(className) {
+    const p = document.createElement('p');
+    p.className = className;
+    return p;
+  }
+
+  function buildDetails() {
+    const root = document.createElement('section');
+    root.id = DETAILS_ID;
+    root.className = 'main-details';
+    root.setAttribute('aria-label', 'Détails');
+
+    const mottoCol = detailsColumn('Devise');
+    const motto = detailsText('main-details-strong');
+    const translation = detailsText('main-details-text');
+    mottoCol.appendChild(motto);
+    mottoCol.appendChild(translation);
+
+    const missionCol = detailsColumn('En mission');
+    const detail = detailsText('main-details-text');
+    missionCol.appendChild(detail);
+
+    const affectationsCol = detailsColumn('Affectations');
+    const chips = document.createElement('ul');
+    chips.className = 'main-details-chips';
+    affectationsCol.appendChild(chips);
+
+    const platformCol = detailsColumn('Plateforme');
+    const type = detailsText('main-details-strong');
+    const platformNote = detailsText('main-details-text');
+    platformCol.appendChild(type);
+    platformCol.appendChild(platformNote);
+
+    root.appendChild(mottoCol);
+    root.appendChild(missionCol);
+    root.appendChild(affectationsCol);
+    root.appendChild(platformCol);
+
+    return {
+      root: root, motto: motto, translation: translation, detail: detail,
+      chips: chips, type: type, platformNote: platformNote
+    };
+  }
+
+  // Affectations : uniquement celles que R6 (app.js) déclare pour l'app
+  function affectationsOf(app) {
+    if (typeof R6 === 'undefined' || !R6 || typeof R6.affectationsFor !== 'function') return [];
+    const list = R6.affectationsFor(app.id);
+    return Array.isArray(list) ? list : [];
+  }
+
+  function renderDetails(app) {
+    const details = stage.details;
+    setText(details.motto, app.motto);
+    setText(details.translation, app.translation);
+    setText(details.detail, app.detail);
+    setText(details.type, app.type);
+    setText(details.platformNote, app.platformNote);
+
+    details.chips.replaceChildren();
+    const names = affectationsOf(app)
+      .map(function(entry) { return entry && cleanText(entry.nom); })
+      .filter(Boolean);
+    if (names.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'main-details-chip main-details-chip--empty';
+      empty.textContent = DETAILS_EMPTY_AFFECTATION;
+      details.chips.appendChild(empty);
+      return;
+    }
+    names.forEach(function(nom) {
+      const chip = document.createElement('li');
+      chip.className = 'main-details-chip';
+      chip.textContent = nom;
+      details.chips.appendChild(chip);
+    });
+  }
+
+  function detailsToggle() {
+    return stage ? stage.actions.querySelector('.main-details-toggle') : null;
+  }
+
+  function applyDetailsToggleState(button) {
+    button.setAttribute('aria-expanded', detailsOpen ? 'true' : 'false');
+    button.textContent = detailsOpen ? DETAILS_CLOSE_LABEL : DETAILS_OPEN_LABEL;
+  }
+
+  function setDetailsOpen(open) {
+    detailsOpen = !!open;
+    if (!stage) return;
+    stage.root.classList.toggle('is-details-open', detailsOpen);
+    const button = detailsToggle();
+    if (button) applyDetailsToggleState(button);
+  }
+
+  function buildDetailsToggle() {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'main-cta main-cta--ghost main-details-toggle';
+    button.setAttribute('aria-controls', DETAILS_ID);
+    applyDetailsToggleState(button);
+    button.addEventListener('click', function() {
+      setDetailsOpen(!detailsOpen);
+    });
+    return button;
+  }
+
+  function onDetailsKeydown(e) {
+    if (e.key !== 'Escape' || !detailsOpen || !stage || carouselIsOpen()) return;
+    const screen = getScreen();
+    const target = e.target;
+    if (target !== document.body && !(screen && screen.contains(target))) return;
+    setDetailsOpen(false);
+    const button = detailsToggle();
+    if (button) button.focus();
   }
 
   function ensureStage() {
@@ -450,6 +587,7 @@
     const screen = getScreen();
     if (!screen) return null;
     stage = buildStage();
+    stage.root.classList.toggle('is-details-open', detailsOpen);
     screen.appendChild(stage.root);
     return stage;
   }
@@ -468,6 +606,7 @@
     setText(stage.translation, app.translation);
     setText(stage.mission, app.mission);
     renderActions(item);
+    renderDetails(app);
   }
 
   function isAllowedAppUrl(url) {
@@ -548,13 +687,14 @@
     let cta = null;
 
     if (item.state === 'open' && app.platform === 'web') {
-      if (!isAllowedAppUrl(app.url)) return;
-      cta = document.createElement('a');
-      cta.className = 'main-cta';
-      cta.href = app.url;
-      cta.target = '_blank';
-      cta.rel = 'noopener noreferrer';
-      cta.textContent = 'Ouvrir ' + name;
+      if (isAllowedAppUrl(app.url)) {
+        cta = document.createElement('a');
+        cta.className = 'main-cta';
+        cta.href = app.url;
+        cta.target = '_blank';
+        cta.rel = 'noopener noreferrer';
+        cta.textContent = 'Ouvrir ' + name;
+      }
     } else if (item.state === 'open' && app.platform === 'desktop') {
       cta = document.createElement('button');
       cta.type = 'button';
@@ -585,6 +725,7 @@
     }
 
     if (cta) actions.insertBefore(cta, note);
+    actions.insertBefore(buildDetailsToggle(), note);
   }
 
   function renderMedia(app) {
@@ -852,6 +993,7 @@
     itemsById = {};
     selectedId = null;
     niveau = null;
+    detailsOpen = false;
     sessionId++;
     pendingRequests = new Set();
   }
@@ -863,6 +1005,7 @@
   });
   document.addEventListener('r6:logout', clear);
   document.addEventListener('visibilitychange', onPlaybackConditionsChange);
+  document.addEventListener('keydown', onDetailsKeydown);
 
   // Le panneau du carrousel est un calque fixe : sa vidéo et celle de la scène ne doivent pas jouer ensemble
   const carouselPanel = document.getElementById('carousel-panel');
