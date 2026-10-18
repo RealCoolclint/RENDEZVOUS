@@ -86,7 +86,7 @@ input[type="search"] {
   background: var(--bg-secondary);
 }
 
-.web-app .app-container {
+.app-container.web-app {
   height: 100vh;
   margin-top: 0;
 }
@@ -3454,10 +3454,10 @@ body:has(#mainView.active) .top-bar-brand {
 }
 
 /* Scène (patch animé) et fiche — étape C */
-/* Hauteur visible de .main-content : 100dvh moins la marge de .app-container (40px)
-   et la .top-bar (80px) ; le .connected-header est masqué plus bas */
+/* Hauteur visible de .main-content : 100dvh moins la .top-bar (80px) ;
+   le .connected-header est masqué plus bas */
 .main-screen:has(.main-stage) {
-  --main-offset-top: 120px;
+  --main-offset-top: 80px;
   height: calc(100dvh - var(--main-offset-top));
   min-height: 0;
 }
