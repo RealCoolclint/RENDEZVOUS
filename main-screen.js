@@ -18,6 +18,8 @@
     locked: 'Verrouillée',
     preparation: 'En préparation'
   };
+  const APP_URL_PREFIX = 'https://realcoolclint.github.io/';
+  const DESKTOP_NOTE = 'Application installée sur ton Mac, ouverture depuis le portail bientôt disponible.';
   const TRANSITION_FALLBACK_MS = 400;
   const MEDIA_READY_MAX_MS = 600;
   // Bord extérieur du patch dans chaque vidéo, en % du demi-côté (mesuré sur images extraites, +1 % de marge).
@@ -403,6 +405,11 @@
     mission.className = 'main-sheet-mission';
     const actions = document.createElement('div');
     actions.className = 'main-actions';
+    const note = document.createElement('p');
+    note.className = 'main-actions-note';
+    note.setAttribute('role', 'status');
+    note.setAttribute('aria-live', 'polite');
+    actions.appendChild(note);
 
     sheet.appendChild(meta);
     sheet.appendChild(requirement);
@@ -420,7 +427,8 @@
       root: root, scene: scene, video: video, img: img,
       placeholder: placeholder, placeholderName: placeholderName,
       status: status, type: type, requirement: requirement,
-      name: name, motto: motto, translation: translation, mission: mission
+      name: name, motto: motto, translation: translation, mission: mission,
+      actions: actions, note: note
     };
   }
 
@@ -443,6 +451,52 @@
     setText(stage.motto, app.motto);
     setText(stage.translation, app.translation);
     setText(stage.mission, app.mission);
+    renderActions(item);
+  }
+
+  function isAllowedAppUrl(url) {
+    return typeof url === 'string' && url.indexOf(APP_URL_PREFIX) === 0;
+  }
+
+  // La note est conservée d'un rendu à l'autre : une région aria-live doit exister avant d'être remplie
+  function renderActions(item) {
+    const app = item.app;
+    const name = app.name || app.id;
+    const actions = stage.actions;
+    const note = stage.note;
+
+    Array.prototype.slice.call(actions.children).forEach(function(child) {
+      if (child !== note) child.remove();
+    });
+    note.textContent = '';
+
+    let cta = null;
+
+    if (item.state === 'open' && app.platform === 'web') {
+      if (!isAllowedAppUrl(app.url)) return;
+      cta = document.createElement('a');
+      cta.className = 'main-cta';
+      cta.href = app.url;
+      cta.target = '_blank';
+      cta.rel = 'noopener noreferrer';
+      cta.textContent = 'Ouvrir ' + name;
+    } else if (item.state === 'open' && app.platform === 'desktop') {
+      cta = document.createElement('button');
+      cta.type = 'button';
+      cta.className = 'main-cta';
+      cta.textContent = 'Ouvrir ' + name;
+      cta.addEventListener('click', function() {
+        note.textContent = DESKTOP_NOTE;
+      });
+    } else if (item.state === 'preparation') {
+      cta = document.createElement('button');
+      cta.type = 'button';
+      cta.className = 'main-cta main-cta--soon';
+      cta.setAttribute('aria-disabled', 'true');
+      cta.textContent = 'Bientôt dans la flotte';
+    }
+
+    if (cta) actions.insertBefore(cta, note);
   }
 
   function renderMedia(app) {
@@ -513,6 +567,7 @@
   function showOnStage(item) {
     if (!item || !ensureStage()) return;
     const sameApp = !!currentItem && currentItem.app.id === item.app.id;
+    if (!sameApp) stage.note.textContent = '';
 
     if (isChanging) {
       targetItem = item;

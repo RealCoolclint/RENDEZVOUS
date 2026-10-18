@@ -14,7 +14,9 @@ window.TranquilityFleet = Object.freeze([
     translation: 'Aucune donnée ne se perd.',
     mission: 'Copie sécurisée des rushes de tournage vers le NAS, le SSD et le cloud.',
     video: 'assets/patch-backupflow.mp4',
-    poster: 'assets/patch-backupflow.png'
+    poster: 'assets/patch-backupflow.png',
+    platform: 'desktop',
+    url: null
   }),
   Object.freeze({
     id: 'transporter',
@@ -28,7 +30,9 @@ window.TranquilityFleet = Object.freeze([
     translation: 'Vite et bien.',
     mission: 'Organisation automatique des fichiers d’un projet Premiere Pro.',
     video: 'assets/patch-transporter.mp4',
-    poster: 'assets/patch-transporter.png'
+    poster: 'assets/patch-transporter.png',
+    platform: 'desktop',
+    url: null
   }),
   Object.freeze({
     id: 'reviewer',
@@ -42,7 +46,9 @@ window.TranquilityFleet = Object.freeze([
     translation: 'Rien sans validation.',
     mission: 'Validation et annotation collaborative des montages vidéo.',
     video: 'assets/patch-reviewer.mp4',
-    poster: 'assets/patch-reviewer.png'
+    poster: 'assets/patch-reviewer.png',
+    platform: 'web',
+    url: 'https://realcoolclint.github.io/Reviewer/'
   }),
   Object.freeze({
     id: 'manifest',
@@ -56,7 +62,9 @@ window.TranquilityFleet = Object.freeze([
     translation: 'Préparer avant tout.',
     mission: 'Feuilles de service générées automatiquement depuis Monday.',
     video: 'assets/patch-manifest.mp4',
-    poster: 'assets/patch-manifest.png'
+    poster: 'assets/patch-manifest.png',
+    platform: 'web',
+    url: 'https://realcoolclint.github.io/Manifest/'
   }),
   Object.freeze({
     id: 'ark',
@@ -70,7 +78,9 @@ window.TranquilityFleet = Object.freeze([
     translation: 'La mémoire demeure.',
     mission: 'Archivage long terme des projets livrés.',
     video: 'assets/patch-ark.mp4',
-    poster: 'assets/patch-ark.png'
+    poster: 'assets/patch-ark.png',
+    platform: 'desktop',
+    url: null
   }),
   Object.freeze({
     id: 'rover',
@@ -84,7 +94,9 @@ window.TranquilityFleet = Object.freeze([
     translation: 'Explore et rapporte.',
     mission: 'Téléchargement de références vidéo depuis plus de mille plateformes.',
     video: 'assets/patch-rover.mp4',
-    poster: 'assets/patch-rover.png'
+    poster: 'assets/patch-rover.png',
+    platform: 'desktop',
+    url: null
   }),
   Object.freeze({
     id: 'covenant',
@@ -98,7 +110,9 @@ window.TranquilityFleet = Object.freeze([
     translation: 'Les écrits restent.',
     mission: 'Signature et validation des autorisations de tournage.',
     video: 'assets/patch-covenant.mp4',
-    poster: 'assets/patch-covenant.png'
+    poster: 'assets/patch-covenant.png',
+    platform: 'web',
+    url: 'https://realcoolclint.github.io/COVENANT/'
   }),
   Object.freeze({
     id: 'codex',
@@ -112,7 +126,9 @@ window.TranquilityFleet = Object.freeze([
     translation: 'D’un seul, deux.',
     mission: 'Transforme un script Word en script prompteur et fiche post-prod.',
     video: 'assets/patch-codex.mp4',
-    poster: 'assets/patch-codex.png'
+    poster: 'assets/patch-codex.png',
+    platform: 'web',
+    url: 'https://realcoolclint.github.io/CODEX/'
   }),
   Object.freeze({
     id: 'readback',
@@ -126,6 +142,8 @@ window.TranquilityFleet = Object.freeze([
     translation: 'Mot pour mot.',
     mission: 'Téléprompteur multi-écrans : MacBook, iPad et iPhone.',
     video: null,
-    poster: null
+    poster: null,
+    platform: 'soon',
+    url: null
   })
 ]);

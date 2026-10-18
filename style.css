@@ -3077,12 +3077,21 @@ body:has(#mainView.active) .top-bar-brand {
    Préfixe main- (ne pas cibler .app-grid, .app-card, .affectation-cta ni .fleet-*)
    ============================================ */
 .main-screen {
+  /* Même retrait horizontal que .top-bar (padding: 8px 24px, 12px sous 768px) : aucune variable
+     n'existe côté en-tête, la valeur doit suivre la sienne */
+  --main-gutter: 24px;
+  /* Les textes s'alignent sur « TRANQUILITY SUITE » de l'en-tête : largeur de .app-patch-header (36px)
+     + sa margin-right (10px), style.css, à suivre si l'en-tête change */
+  --main-brand-logo: 36px;
+  --main-brand-gap: 10px;
+  --main-text-offset: calc(var(--main-brand-logo) + var(--main-brand-gap));
+  --main-pad-bottom: clamp(12px, 2.5vh, 32px);
   --main-tile-size-selected: clamp(72px, 11vh, 136px);
   --main-tile-size: calc(var(--main-tile-size-selected) * 0.68);
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: clamp(4px, 1vh, 12px) clamp(16px, 4vw, 48px) clamp(12px, 2.5vh, 32px);
+  padding: clamp(4px, 1vh, 12px) var(--main-gutter) var(--main-pad-bottom);
   background: var(--bg-void);
   color: var(--text-primary);
   font-family: 'Lato', sans-serif;
@@ -3092,8 +3101,8 @@ body:has(#mainView.active) .top-bar-brand {
   display: flex;
   flex-direction: column;
   gap: clamp(8px, 1.6vh, 24px);
-  width: min(1240px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 .main-row-head {
@@ -3102,6 +3111,7 @@ body:has(#mainView.active) .top-bar-brand {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px 24px;
+  padding-left: var(--main-text-offset);
 }
 
 .main-row-titles {
@@ -3360,18 +3370,20 @@ body:has(#mainView.active) .top-bar-brand {
   flex: 1 1 0;
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
+  /* Fiche centrée dans l'espace libre, 80px minimum entre elle et le bas de la fenêtre
+     (futur panneau Détails), marge basse de .main-screen comprise */
+  grid-template-rows: minmax(0, 1fr) auto minmax(calc(80px - var(--main-pad-bottom)), 1fr);
   column-gap: clamp(16px, 3vw, 48px);
-  width: min(1240px, 100%);
+  width: 100%;
   min-height: 0;
-  margin: clamp(4px, 1vh, 8px) auto 0;
+  margin: clamp(4px, 1vh, 8px) 0 0;
   overflow: hidden;
 }
 
 .main-scene {
   position: relative;
   grid-column: 2;
-  grid-row: 1;
+  grid-row: 1 / -1;
   z-index: 0;
   min-width: 0;
   min-height: 0;
@@ -3477,10 +3489,10 @@ body:has(#mainView.active) .top-bar-brand {
   align-items: flex-start;
   gap: clamp(6px, 1vh, 10px);
   grid-column: 1;
-  grid-row: 1;
-  align-self: end;
+  grid-row: 2;
+  align-self: start;
   max-width: 100%;
-  padding: 0 0 4px;
+  padding: 0 0 4px var(--main-text-offset);
   min-width: 0;
   container-type: inline-size;
   transition: opacity var(--transition);
@@ -3588,8 +3600,77 @@ body:has(#mainView.active) .top-bar-brand {
 
 .main-actions {
   align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 8px 18px;
   min-height: 52px;
   margin-top: 10px;
+}
+
+.main-cta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  padding: 0 26px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-primary);
+  font-family: 'Lato', sans-serif;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.main-cta:hover {
+  background: var(--accent-hover);
+  color: var(--text-primary);
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.main-cta:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.main-cta--soon,
+.main-cta--soon:hover {
+  border-color: var(--border-hover);
+  background: color-mix(in srgb, var(--text-primary) 7%, transparent);
+  color: var(--text-tertiary);
+  box-shadow: none;
+  cursor: default;
+}
+
+.main-actions-note {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  font-family: 'Lato', sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  text-transform: none;
+  color: var(--text-secondary);
+}
+
+/* Fenêtres basses : le nom rétrécit pour garder les 80px réservés sous la fiche */
+@media (min-width: 761px) and (max-height: 760px) {
+  .main-sheet-name {
+    font-size: min(12.5cqw, 9vh, 120px);
+  }
+}
+
+@media (max-width: 768px) {
+  .main-screen {
+    --main-gutter: 12px;
+  }
 }
 
 @media (max-width: 760px) {
@@ -3599,11 +3680,11 @@ body:has(#mainView.active) .top-bar-brand {
     padding: 16px 0 24px;
   }
   .main-row-head {
-    padding: 0 16px;
+    padding: 0 var(--main-gutter);
   }
   .main-tiles {
-    padding: 12px 16px 8px;
-    scroll-padding-inline: 16px;
+    padding: 12px var(--main-gutter) 8px;
+    scroll-padding-inline: var(--main-gutter);
   }
   .main-screen:has(.main-stage) {
     height: auto;
@@ -3614,7 +3695,7 @@ body:has(#mainView.active) .top-bar-brand {
     align-items: stretch;
     flex: 0 0 auto;
     min-height: 0;
-    padding: 0 16px;
+    padding: 0 var(--main-gutter);
   }
   .main-scene {
     position: relative;
@@ -3631,6 +3712,13 @@ body:has(#mainView.active) .top-bar-brand {
     align-self: stretch;
     max-width: 100%;
     margin-top: 16px;
+    padding-left: 0;
+  }
+  .main-actions {
+    flex-wrap: wrap;
+  }
+  .main-actions-note {
+    flex-basis: 100%;
   }
   .main-sheet-name {
     font-size: min(12.5cqw, 56px);
@@ -3643,7 +3731,8 @@ body:has(#mainView.active) .top-bar-brand {
   .main-tile-disc,
   .main-tile-img,
   .main-scene,
-  .main-sheet {
+  .main-sheet,
+  .main-cta {
     transition: none;
   }
   .main-tiles {
