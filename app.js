@@ -14,6 +14,7 @@ const MagicLinkAuth = (() => {
 
   let _pendingForcePasswordSession = null;
   let _sessionVerifyIntervalId = null;
+  let _profileMenuBound = false;
 
   function _decodeToken(token) {
     try {
@@ -102,8 +103,86 @@ const MagicLinkAuth = (() => {
     _sessionVerifyIntervalId = setInterval(_verifySessionOnce, SESSION_VERIFY_INTERVAL_MS);
   }
 
+  function _isProfileMenuOpen() {
+    const menu = document.getElementById('profile-menu');
+    return !!(menu && !menu.hidden);
+  }
+
+  function _closeProfileMenu(options) {
+    const menu = document.getElementById('profile-menu');
+    const avatarBtn = document.getElementById('profile-avatar-btn');
+    if (!menu || menu.hidden) return;
+    menu.hidden = true;
+    if (avatarBtn) avatarBtn.setAttribute('aria-expanded', 'false');
+    if (options && options.restoreFocus && avatarBtn) avatarBtn.focus();
+  }
+
+  function _openProfileMenu() {
+    const menu = document.getElementById('profile-menu');
+    const avatarBtn = document.getElementById('profile-avatar-btn');
+    if (!menu) return;
+    menu.hidden = false;
+    if (avatarBtn) avatarBtn.setAttribute('aria-expanded', 'true');
+    const first = document.getElementById('profile-menu-settings');
+    if (first) first.focus();
+  }
+
+  function _bindProfileMenuOnce() {
+    if (_profileMenuBound) return;
+    const menu = document.getElementById('profile-menu');
+    const settingsBtn = document.getElementById('profile-menu-settings');
+    const logoutBtn = document.getElementById('profile-menu-logout');
+    if (!menu || !settingsBtn || !logoutBtn) return;
+    _profileMenuBound = true;
+
+    settingsBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      showNotification('Bientôt disponible.');
+    });
+
+    logoutBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      _closeProfileMenu();
+      logout();
+    });
+
+    menu.addEventListener('keydown', function(e) {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const items = [settingsBtn, logoutBtn];
+      const index = items.indexOf(document.activeElement);
+      if (index < 0) return;
+      e.preventDefault();
+      const nextIndex = e.key === 'ArrowDown'
+        ? (index + 1) % items.length
+        : (index - 1 + items.length) % items.length;
+      items[nextIndex].focus();
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!_isProfileMenuOpen()) return;
+      const wrap = document.getElementById('top-bar-profile');
+      if (wrap && wrap.contains(e.target)) return;
+      _closeProfileMenu();
+    });
+
+    // Capture : n'agit que si le menu est ouvert, sans stopper la propagation
+    // (Échap du tiroir de connexion et du panneau Détails).
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape' || !_isProfileMenuOpen()) return;
+      _closeProfileMenu({ restoreFocus: true });
+    }, true);
+
+    document.addEventListener('focusout', function(e) {
+      if (!_isProfileMenuOpen()) return;
+      if (!menu.contains(e.target)) return;
+      if (e.relatedTarget && menu.contains(e.relatedTarget)) return;
+      _closeProfileMenu();
+    });
+  }
+
   function logout(sessionExpired) {
     _stopSessionVerification();
+    _closeProfileMenu();
     sessionStorage.removeItem(LS_KEY);
     document.dispatchEvent(new CustomEvent('r6:logout'));
     const wrap = document.getElementById('top-bar-profile');
@@ -126,14 +205,23 @@ const MagicLinkAuth = (() => {
       fallback.textContent = (session.email || '?').charAt(0).toUpperCase();
       fallback.style.display = 'flex';
     }
+    const identity = document.getElementById('profile-menu-identity');
+    if (identity) identity.textContent = session && session.email ? session.email : '';
+    _bindProfileMenuOnce();
     const avatarBtn = document.getElementById('profile-avatar-btn');
     if (avatarBtn) {
       const newBtn = avatarBtn.cloneNode(true);
       avatarBtn.parentNode.replaceChild(newBtn, avatarBtn);
+      // Empêche le bouton de prendre le focus avant le clic : sinon le focusout
+      // ferme le menu, et le clic le rouvre.
+      newBtn.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+      });
       newBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        logout();
+        if (_isProfileMenuOpen()) _closeProfileMenu({ restoreFocus: true });
+        else _openProfileMenu();
       });
     }
   }
