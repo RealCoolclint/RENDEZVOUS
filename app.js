@@ -747,65 +747,6 @@ const R6 = (() => {
     }
   }
 
-  // Rendu d'une carte selon l'état (déverrouillée ou verrouillée)
-  function _renderCard(card, appId, userApps, niveau, affectation) {
-    const badgeEl = card.querySelector('.app-card-badge');
-    const ctaEl   = card.querySelector('.app-card-cta');
-    if (!badgeEl || !ctaEl) return;
-
-    const hasAccess = Array.isArray(userApps) && userApps.includes(appId);
-
-    if (hasAccess) {
-      // Carte déverrouillée — pas de badge, pas de CTA
-      card.classList.remove('locked');
-      badgeEl.innerHTML = '';
-      ctaEl.innerHTML   = '';
-      return;
-    }
-
-    // Carte verrouillée — badge + CTA selon niveau
-    card.classList.add('locked');
-
-    if (niveau === 'N4') {
-      // N4 — badge "Accès individuel requis" + texte statique (D36 + D37)
-      badgeEl.innerHTML = `
-        <div class="affectation-badge">
-          <span class="affectation-badge-main">Accès individuel requis</span>
-        </div>`;
-      ctaEl.innerHTML = `
-        <span class="affectation-readonly">Accès en lecture — aucune action requise</span>`;
-
-    } else if (niveau === 'N3') {
-      // N3 — badge "Accès individuel requis" + CTA demande (D36)
-      badgeEl.innerHTML = `
-        <div class="affectation-badge">
-          <span class="affectation-badge-main">Accès individuel requis</span>
-        </div>`;
-      ctaEl.innerHTML = `
-        <button class="affectation-cta" type="button">Demander une affectation</button>`;
-
-    } else {
-      // N1 / N2 — badge "Affectation [Nom] requise" + nom métier + CTA (D33)
-      // On cherche la première affectation qui donne accès à cette app
-      const affectationsRequises = APP_TO_AFFECTATIONS[appId] || [];
-      const principale = affectationsRequises[0] || null;
-      const metier = principale && AFFECTATIONS[principale]
-        ? AFFECTATIONS[principale].metier
-        : '';
-      const badgeMain = principale
-        ? 'Affectation ' + principale + ' requise'
-        : 'Affectation requise';
-
-      badgeEl.innerHTML = `
-        <div class="affectation-badge">
-          <span class="affectation-badge-main">${badgeMain}</span>
-          ${metier ? '<span class="affectation-badge-sub">' + metier + '</span>' : ''}
-        </div>`;
-      ctaEl.innerHTML = `
-        <button class="affectation-cta" type="button">Demander une affectation</button>`;
-    }
-  }
-
   // Point d'entrée principal — appelé après connexion réussie
   function init(session) {
     const payload = _decodeJwt(session.token);
@@ -815,16 +756,8 @@ const R6 = (() => {
     const userApps    = Array.isArray(payload.apps) ? payload.apps : [];
     const affectation = payload.affectation || null;
 
-    // Rendu de toutes les cartes
-    document.querySelectorAll('.app-grid .app-card').forEach(function(card) {
-      const appId = card.dataset.appId;
-      if (!appId) return;
-      _renderCard(card, appId, userApps, niveau, affectation);
-    });
-
     // Bascule vers la vue connectée
     switchView('connected');
-    _bindCtas();
 
     document.dispatchEvent(new CustomEvent('r6:ready', {
       detail: {
@@ -835,57 +768,6 @@ const R6 = (() => {
         prenom: null
       }
     }));
-  }
-
-  function _bindCtas() {
-    document.querySelectorAll('.app-grid .affectation-cta').forEach(function(btn) {
-      const newBtn = btn.cloneNode(true);
-      btn.parentNode.replaceChild(newBtn, btn);
-      newBtn.addEventListener('click', async function() {
-        if (newBtn.disabled) return;
-
-        const card = newBtn.closest('.app-card');
-        const appId = card && card.dataset.appId;
-        if (!appId) return;
-
-        newBtn.disabled = true;
-        newBtn.textContent = 'Envoi...';
-
-        try {
-          const raw = sessionStorage.getItem('ts_session_rendezvous');
-          const session = JSON.parse(raw);
-          const token = session && session.token;
-
-          const response = await fetch(REQUEST_AFFECTATION_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token, appId })
-          });
-
-          let data = null;
-          try {
-            data = await response.json();
-          } catch (_) {}
-
-          if (response.ok) {
-            newBtn.disabled = true;
-            newBtn.textContent = 'Demande envoyée';
-            showNotification("Demande transmise — l'équipe Tranquility prend contact avec toi.");
-            return;
-          }
-
-          newBtn.disabled = false;
-          newBtn.textContent = 'Demander une affectation';
-          showNotification(
-            (data && data.error) ? data.error : 'Erreur réseau, réessaie.'
-          );
-        } catch (_) {
-          newBtn.disabled = false;
-          newBtn.textContent = 'Demander une affectation';
-          showNotification('Erreur réseau, réessaie.');
-        }
-      });
-    });
   }
 
   // Affectations donnant accès à une app, dans l'ordre de APP_TO_AFFECTATIONS
@@ -1008,74 +890,3 @@ MagicLinkAuth.initSession = async function() {
     }
   } catch {}
 };
-
-// ============================================================
-
-function initCardAmbianceVideos() {
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
-    return;
-  }
-
-  let activeVideo = null;
-
-  function getCardVideo(card) {
-    if (!card) return null;
-    const patchZone = card.querySelector('.card-patch-zone');
-    if (!patchZone) return null;
-    return patchZone.querySelector('video.card-ambiance-video');
-  }
-
-  function stopVideo(video) {
-    if (!video) return;
-    video.classList.remove('is-playing');
-    video.pause();
-    video.currentTime = 0;
-    if (activeVideo === video) activeVideo = null;
-  }
-
-  function playCardVideo(card) {
-    const video = getCardVideo(card);
-    if (!video) return;
-
-    if (activeVideo && activeVideo !== video) {
-      stopVideo(activeVideo);
-    }
-
-    activeVideo = video;
-    video.classList.add('is-playing');
-    const playPromise = video.play();
-    if (playPromise && typeof playPromise.catch === 'function') {
-      playPromise.catch(function() {});
-    }
-  }
-
-  function handleMouseOver(e) {
-    const grid = e.currentTarget;
-    const card = e.target.closest('.fleet-card, .app-card');
-    if (!card || !grid.contains(card)) return;
-
-    const related = e.relatedTarget;
-    if (related && card.contains(related)) return;
-
-    playCardVideo(card);
-  }
-
-  function handleMouseOut(e) {
-    const grid = e.currentTarget;
-    const card = e.target.closest('.fleet-card, .app-card');
-    if (!card || !grid.contains(card)) return;
-
-    const related = e.relatedTarget;
-    if (related && card.contains(related)) return;
-
-    const video = getCardVideo(card);
-    if (video) stopVideo(video);
-  }
-
-  document.querySelectorAll('.app-grid, .fleet-grid').forEach(function(grid) {
-    grid.addEventListener('mouseover', handleMouseOver);
-    grid.addEventListener('mouseout', handleMouseOut);
-  });
-}
-
-document.addEventListener('DOMContentLoaded', initCardAmbianceVideos);

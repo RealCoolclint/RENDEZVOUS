@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=50">
+    <link rel="stylesheet" href="style.css?v=51">
 </head>
 <body class="dark-theme">
     <div id="mercury-opening">
@@ -187,106 +187,6 @@
               <!-- Écran principal — rangée de tuiles (main-screen.js) -->
               <section id="mainScreen" class="main-screen" aria-label="Flotte">
                 <div class="main-row-host"></div>
-              </section>
-
-              <!-- Cartographie de flotte -->
-              <section class="fleet-section" hidden>
-                <p class="fleet-section-title">Cartographie de flotte</p>
-                <div class="app-grid">
-
-                  <div class="app-card" data-app-id="backupflow">
-                    <div class="card-patch-zone">
-                      <img src="assets/patch-backupflow.png" alt="BackUpFlow mission patch" class="card-patch-img" loading="lazy">
-                      <video class="card-ambiance-video" muted loop playsinline preload="none">
-                        <source src="assets/ambiance-backupflow.mp4" type="video/mp4">
-                      </video>
-                    </div>
-                    <span class="app-card-name">BackUpFlow</span>
-                    <div class="app-card-badge"></div>
-                    <div class="app-card-cta"></div>
-                  </div>
-
-                  <div class="app-card" data-app-id="transporter">
-                    <div class="card-patch-zone">
-                      <img src="assets/patch-transporter.png" alt="Transporter mission patch" class="card-patch-img" loading="lazy">
-                      <video class="card-ambiance-video" muted loop playsinline preload="none">
-                        <source src="assets/ambiance-transporter.mp4" type="video/mp4">
-                      </video>
-                    </div>
-                    <span class="app-card-name">Transporter</span>
-                    <div class="app-card-badge"></div>
-                    <div class="app-card-cta"></div>
-                  </div>
-
-                  <div class="app-card" data-app-id="manifest">
-                    <div class="card-patch-zone">
-                      <img src="assets/patch-manifest.png" alt="Manifest mission patch" class="card-patch-img" loading="lazy">
-                      <video class="card-ambiance-video" muted loop playsinline preload="none">
-                        <source src="assets/ambiance-manifest.mp4" type="video/mp4">
-                      </video>
-                    </div>
-                    <span class="app-card-name">Manifest</span>
-                    <div class="app-card-badge"></div>
-                    <div class="app-card-cta"></div>
-                  </div>
-
-                  <div class="app-card" data-app-id="reviewer">
-                    <div class="card-patch-zone">
-                      <img src="assets/patch-reviewer.png" alt="Reviewer mission patch" class="card-patch-img" loading="lazy">
-                      <video class="card-ambiance-video" muted loop playsinline preload="none">
-                        <source src="assets/ambiance-reviewer.mp4" type="video/mp4">
-                      </video>
-                    </div>
-                    <span class="app-card-name">Reviewer</span>
-                    <div class="app-card-badge"></div>
-                    <div class="app-card-cta"></div>
-                  </div>
-
-                  <div class="app-card" data-app-id="ark">
-                    <div class="card-patch-zone">
-                      <img src="assets/patch-ark.png" alt="ARK mission patch" class="card-patch-img" loading="lazy">
-                      <video class="card-ambiance-video" muted loop playsinline preload="none">
-                        <source src="assets/ambiance-ark.mp4" type="video/mp4">
-                      </video>
-                    </div>
-                    <span class="app-card-name">ARK</span>
-                    <div class="app-card-badge"></div>
-                    <div class="app-card-cta"></div>
-                  </div>
-
-                  <div class="app-card" data-app-id="rover">
-                    <div class="card-patch-zone">
-                      <img src="assets/patch-rover.png" alt="Rover mission patch" class="card-patch-img" loading="lazy">
-                      <!-- D129 — ambiance retirée temporairement : fond clair non conforme à la règle Mercury Opening. À réintégrer avec le pipeline transparence. -->
-                    </div>
-                    <span class="app-card-name">Rover</span>
-                    <div class="app-card-badge"></div>
-                    <div class="app-card-cta"></div>
-                  </div>
-
-                  <div class="app-card" data-app-id="covenant">
-                    <div class="card-patch-zone">
-                      <img src="assets/patch-covenant.png" alt="Covenant mission patch" class="card-patch-img" loading="lazy">
-                      <!-- D129 — ambiance retirée temporairement : fond clair non conforme à la règle Mercury Opening. À réintégrer avec le pipeline transparence. -->
-                    </div>
-                    <span class="app-card-name">Covenant</span>
-                    <div class="app-card-badge"></div>
-                    <div class="app-card-cta"></div>
-                  </div>
-
-                  <div class="app-card" data-app-id="codex">
-                    <div class="card-patch-zone">
-                      <img src="assets/patch-codex.png" alt="CODEX mission patch" class="card-patch-img" loading="lazy">
-                      <video class="card-ambiance-video" muted loop playsinline preload="none">
-                        <source src="assets/ambiance-codex.mp4" type="video/mp4">
-                      </video>
-                    </div>
-                    <span class="app-card-name">CODEX</span>
-                    <div class="app-card-badge"></div>
-                    <div class="app-card-cta"></div>
-                  </div>
-
-                </div>
               </section>
 
             </div>
@@ -483,9 +383,9 @@
     </div>
     -->
 
-    <script src="glass-drawer.js?v=7"></script>
+    <script src="glass-drawer.js?v=8"></script>
     <script src="cosmos.js?v=2"></script>
-    <script src="app.js?v=14"></script>
+    <script src="app.js?v=15"></script>
     <script src="inscription.js?v=7"></script>
     <script src="carousel-data.js?v=3"></script>
     <script src="carousel.js?v=2"></script>

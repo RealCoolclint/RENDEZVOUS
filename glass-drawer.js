@@ -125,12 +125,10 @@ const GlassDrawer = (function() {
 
   function _defaultTrigger(drawerId) {
     if (drawerId === 'inscription-drawer') {
-      return document.getElementById('inscription-trigger')
-        || document.querySelector('.vitrine-cta-secondary');
+      return document.getElementById('inscription-trigger');
     }
     if (drawerId === 'connect-drawer') {
-      return document.getElementById('connect-trigger')
-        || document.querySelector('.vitrine-cta-primary');
+      return document.getElementById('connect-trigger');
     }
     return null;
   }
