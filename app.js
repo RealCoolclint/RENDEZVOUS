@@ -187,6 +187,10 @@ const MagicLinkAuth = (() => {
     document.dispatchEvent(new CustomEvent('r6:logout'));
     const wrap = document.getElementById('top-bar-profile');
     if (wrap) wrap.style.display = 'none';
+    const identity = document.getElementById('profile-menu-identity');
+    if (identity) identity.textContent = '';
+    const fallback = document.getElementById('header-profile-fallback');
+    if (fallback) fallback.textContent = '';
     showNotification(
       sessionExpired
         ? 'Session expirée, merci de te reconnecter.'
