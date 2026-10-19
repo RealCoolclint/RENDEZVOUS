@@ -37,7 +37,7 @@
   const PATCH_EDGES = {
     ark: 99,
     backupflow: 101,
-    codex: 95,
+    codex: 97,
     covenant: 78,
     manifest: 93,
     reviewer: 101,
