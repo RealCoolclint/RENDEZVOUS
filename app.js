@@ -175,7 +175,7 @@ const MagicLinkAuth = (() => {
     document.addEventListener('focusout', function(e) {
       if (!_isProfileMenuOpen()) return;
       if (!menu.contains(e.target)) return;
-      if (e.relatedTarget && menu.contains(e.relatedTarget)) return;
+      if (!e.relatedTarget || menu.contains(e.relatedTarget)) return;
       _closeProfileMenu();
     });
   }
