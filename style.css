@@ -3990,6 +3990,14 @@ body:has(#mainView.active) .top-bar-brand {
   .main-stage.is-details-open .main-details {
     display: grid;
   }
+  .main-sheet { order: 1; margin-top: 8px; }
+  .main-details { order: 2; }
+  .main-scene { order: 3; margin-top: 32px; }
+  .main-veil { display: none; }
+  .main-actions { order: 1; }
+  .main-sheet-motto,
+  .main-sheet-translation,
+  .main-sheet-mission { order: 2; }
 }
 
 @media (prefers-reduced-motion: reduce) {
