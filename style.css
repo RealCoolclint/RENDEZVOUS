@@ -53,12 +53,18 @@
   box-sizing: border-box;
 }
 
+html {
+  overscroll-behavior: none;
+}
+
 body {
   font-family: 'Lato', sans-serif;
   background: var(--bg-secondary);
   color: var(--text-primary);
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
+  overscroll-behavior: none;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
@@ -88,6 +94,7 @@ input[type="search"] {
 
 .app-container.web-app {
   height: 100vh;
+  height: 100dvh;
   margin-top: 0;
 }
 
@@ -820,6 +827,7 @@ body:not(.glass-drawer-open) .app-container {
 
 .web-app .main-content {
   overflow-y: auto;
+  overscroll-behavior: none;
   flex: 1;
   min-height: 0;
   display: flex;
