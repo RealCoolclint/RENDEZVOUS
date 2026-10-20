@@ -1706,7 +1706,7 @@ body:not(.glass-drawer-open) .app-container {
   }
 
   .main-content {
-    padding: 24px;
+    padding: 0;
   }
 }
 
@@ -2582,6 +2582,17 @@ body:has(#mainView.active) .top-bar-brand {
   }
 }
 
+@keyframes lobby-patch-in-flow {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes lobby-sunrise {
   0%,
   100% {
@@ -2662,6 +2673,59 @@ body:has(#mainView.active) .top-bar-brand {
 
   .lobby-benefits li {
     font-size: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+  .lobby {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 48px 24px 32px;
+    --lobby-patch: min(40vw, 24vh);
+  }
+
+  .lobby-stage {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    transform: none;
+    margin: 0 auto;
+    order: 1;
+    flex-shrink: 0;
+    animation-name: lobby-patch-in-flow;
+  }
+
+  .lobby-hero {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    order: 2;
+  }
+
+  .lobby-actions {
+    order: 1;
+    margin-top: 8px;
+  }
+
+  .lobby-benefits {
+    order: 2;
+    margin-top: 12px;
+  }
+
+  .lobby-steps {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    order: 3;
+  }
+
+  .lobby-veil--top {
+    height: 72px;
   }
 }
 
