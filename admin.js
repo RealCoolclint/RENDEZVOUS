@@ -3,35 +3,37 @@
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-list-profiles';
   const ADMIN_UPDATE_URL =
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-update-profile';
-  const STORAGE_KEY = 'admin_secret';
+  const ADMIN_SESSION_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-session';
+  const SESSION_KEY = 'admin_session';
+  const LEGACY_SECRET_KEY = 'admin_secret';
 
-  function _storeAdminSecret(secret) {
-    const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ value: secret, expiresAt: expiresAt }));
+  function _storeAdminSession(token, expiresAt) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ value: token, expiresAt: expiresAt }));
   }
 
-  function _readAdminSecret() {
-    const raw = localStorage.getItem(STORAGE_KEY);
+  function _readAdminSession() {
+    const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     try {
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed.value !== 'string' || typeof parsed.expiresAt !== 'number') {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(SESSION_KEY);
         return null;
       }
       if (Date.now() > parsed.expiresAt) {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(SESSION_KEY);
         return null;
       }
       return parsed.value;
     } catch (_) {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(SESSION_KEY);
       return null;
     }
   }
 
-  function _clearAdminSecret() {
-    localStorage.removeItem(STORAGE_KEY);
+  function _clearAdminSession() {
+    localStorage.removeItem(SESSION_KEY);
   }
 
   let selectedAction = null;
@@ -320,16 +322,21 @@
   }
 
   async function refreshProfilesList() {
-    const secret = _readAdminSecret();
-    if (!secret) return;
+    const token = _readAdminSession();
+    if (!token) return;
 
     try {
       const response = await fetch(ADMIN_LIST_URL, {
         method: 'GET',
         headers: {
-          'x-admin-secret': secret
+          'Authorization': 'Bearer ' + token
         }
       });
+
+      if (response.status === 401) {
+        _clearAdminSession();
+        return;
+      }
 
       if (!response.ok) return;
 
@@ -344,6 +351,14 @@
       const filter = activeTab && activeTab.dataset.filter ? activeTab.dataset.filter : 'pending';
       renderProfiles(filter);
     } catch (_) {}
+  }
+
+  function _showSessionExpiredDetailError() {
+    const errorEl = document.getElementById('admin-detail-action-error');
+    if (errorEl) {
+      errorEl.textContent = 'Session expirée, recharge la page et resaisis le secret.';
+      errorEl.style.display = 'block';
+    }
   }
 
   async function submitDetailSave() {
@@ -395,15 +410,27 @@
         }
       }
 
-      const secret = _readAdminSecret();
+      const token = _readAdminSession();
+      if (!token) {
+        _clearAdminSession();
+        _showSessionExpiredDetailError();
+        return;
+      }
+
       const response = await fetch(ADMIN_UPDATE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-secret': secret
+          'Authorization': 'Bearer ' + token
         },
         body: JSON.stringify(body)
       });
+
+      if (response.status === 401) {
+        _clearAdminSession();
+        _showSessionExpiredDetailError();
+        return;
+      }
 
       if (response.ok) {
         if (selectedAction === 'activer') {
@@ -448,12 +475,13 @@
     }
   }
 
-  async function verifySecret(secret, isAutoCheck) {
+  async function openAdminWithToken(token, isAutoCheck) {
     const submitBtn = document.getElementById('admin-secret-submit');
     const input = document.getElementById('admin-secret-input');
     const originalText = submitBtn ? submitBtn.textContent : 'Valider';
 
-    if (submitBtn) {
+    // Hors démarrage, verifySecret gère déjà l'état du bouton.
+    if (isAutoCheck && submitBtn) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Vérification…';
     }
@@ -462,7 +490,7 @@
       const response = await fetch(ADMIN_LIST_URL, {
         method: 'GET',
         headers: {
-          'x-admin-secret': secret
+          'Authorization': 'Bearer ' + token
         }
       });
 
@@ -472,7 +500,6 @@
           result = await response.json();
         } catch (_) {}
 
-        _storeAdminSecret(secret);
         window.adminProfiles = (result && result.profiles) ? result.profiles : [];
         showAdminContent();
         renderProfiles('pending');
@@ -517,13 +544,60 @@
       }
 
       if (response.status === 401) {
-        if (isAutoCheck) {
-          _clearAdminSecret();
-          showAuthError('Ta session a expiré, resaisis le secret.');
-          if (input) input.focus();
-        } else {
-          showAuthError('Secret invalide.');
+        _clearAdminSession();
+        showAuthError('Ta session a expiré, resaisis le secret.');
+        if (input) input.focus();
+        return;
+      }
+
+      showAuthError('Erreur de connexion, réessaie.');
+    } catch (_) {
+      showAuthError('Erreur de connexion, réessaie.');
+    } finally {
+      if (isAutoCheck && submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    }
+  }
+
+  async function verifySecret(secret) {
+    const submitBtn = document.getElementById('admin-secret-submit');
+    const originalText = submitBtn ? submitBtn.textContent : 'Valider';
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Vérification…';
+    }
+
+    try {
+      const response = await fetch(ADMIN_SESSION_URL, {
+        method: 'POST',
+        headers: {
+          'x-admin-secret': secret
         }
+      });
+
+      if (response.status === 200) {
+        let result = null;
+        try {
+          result = await response.json();
+        } catch (_) {}
+
+        const token = result ? result.token : null;
+        const expiresAt = result ? result.expiresAt : null;
+        if (typeof token !== 'string' || token === '' || typeof expiresAt !== 'number') {
+          showAuthError('Erreur de connexion, réessaie.');
+          return;
+        }
+
+        _storeAdminSession(token, expiresAt);
+        await openAdminWithToken(token, false);
+        return;
+      }
+
+      if (response.status === 401) {
+        showAuthError('Secret invalide.');
         return;
       }
 
@@ -552,10 +626,12 @@
     const value = (input.value || '').trim();
     if (!value) return;
     hideAuthError();
-    verifySecret(value, false);
+    verifySecret(value);
   }
 
   document.addEventListener('DOMContentLoaded', function() {
+    localStorage.removeItem(LEGACY_SECRET_KEY);
+
     const submitBtn = document.getElementById('admin-secret-submit');
     const input = document.getElementById('admin-secret-input');
 
@@ -636,9 +712,9 @@
       saveDetailBtn.addEventListener('click', submitDetailSave);
     }
 
-    const stored = _readAdminSecret();
-    if (stored) {
-      verifySecret(stored, true);
+    const token = _readAdminSession();
+    if (token) {
+      openAdminWithToken(token, true);
     } else if (input) {
       input.focus();
     }
