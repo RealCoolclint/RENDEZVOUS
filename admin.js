@@ -527,6 +527,11 @@
         return;
       }
 
+      if (response.status === 429) {
+        showAuthError('Trop d\'essais, réessaie dans quelques minutes.');
+        return;
+      }
+
       showAuthError('Erreur de connexion, réessaie.');
     } catch (_) {
       showAuthError('Erreur de connexion, réessaie.');
