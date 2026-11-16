@@ -5,6 +5,8 @@
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-update-profile';
   const ADMIN_SESSION_URL =
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-session';
+  const ADMIN_CHANGE_SECRET_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-change-secret';
   const SESSION_KEY = 'admin_session';
   const LEGACY_SECRET_KEY = 'admin_secret';
 
@@ -617,6 +619,163 @@
     }
   }
 
+  function _resetSecurityFields() {
+    ['admin-security-current', 'admin-security-new', 'admin-security-confirm'].forEach(function(id) {
+      const field = document.getElementById(id);
+      if (field) field.value = '';
+    });
+  }
+
+  function _showSecurityError(message) {
+    const errorEl = document.getElementById('admin-security-error');
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+  }
+
+  function _hideSecurityError() {
+    const errorEl = document.getElementById('admin-security-error');
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    errorEl.style.display = 'none';
+  }
+
+  function _securityErrorText(data) {
+    if (!data || typeof data.code !== 'string' || !data.code) {
+      return 'Erreur inattendue, réessaie (code RDV-901).';
+    }
+    if (data.code === 'RDV-101') {
+      return 'Ta session a expiré, recharge la page et resaisis le secret (code RDV-101).';
+    }
+    if (data.code === 'RDV-401') {
+      return 'Secret actuel incorrect (code RDV-401).';
+    }
+    const serverError = typeof data.error === 'string' ? data.error : '';
+    if (!serverError) {
+      return '(code ' + data.code + ')';
+    }
+    if (serverError.indexOf(data.code) !== -1) {
+      return serverError;
+    }
+    return serverError + ' (code ' + data.code + ')';
+  }
+
+  function openSecurityDrawer(triggerEl) {
+    _resetSecurityFields();
+    _hideSecurityError();
+    if (typeof GlassDrawer !== 'undefined') {
+      GlassDrawer.open('admin-security-drawer', triggerEl);
+    }
+    const currentField = document.getElementById('admin-security-current');
+    if (currentField) currentField.focus();
+  }
+
+  function closeSecurityDrawer() {
+    if (typeof GlassDrawer !== 'undefined') {
+      GlassDrawer.close('admin-security-drawer');
+    }
+    _resetSecurityFields();
+  }
+
+  // GlassDrawer.close accepte onClosed, mais Échap appelle close(id) sans
+  // options, et aucun enregistrement public ne couvre tous les chemins.
+  // On observe la perte de is-open, retirée par close() quel que soit l'appelant.
+  function _watchSecurityDrawerClose() {
+    const drawer = document.getElementById('admin-security-drawer');
+    if (!drawer || typeof MutationObserver === 'undefined') return;
+
+    let wasOpen = drawer.classList.contains('is-open');
+    const observer = new MutationObserver(function() {
+      const isOpen = drawer.classList.contains('is-open');
+      if (wasOpen && !isOpen) {
+        _resetSecurityFields();
+        _hideSecurityError();
+      }
+      wasOpen = isOpen;
+    });
+    observer.observe(drawer, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  async function submitSecretChange() {
+    const saveBtn = document.getElementById('admin-security-save');
+    if (saveBtn && saveBtn.disabled) return;
+
+    const currentField = document.getElementById('admin-security-current');
+    const newField = document.getElementById('admin-security-new');
+    const confirmField = document.getElementById('admin-security-confirm');
+    if (!currentField || !newField || !confirmField) return;
+
+    const currentSecret = (currentField.value || '').trim();
+    const newSecret = newField.value;
+    const confirmSecret = confirmField.value;
+
+    if (currentSecret === '' || newSecret === '' || confirmSecret === '') {
+      _showSecurityError('Remplis les trois champs.');
+      return;
+    }
+
+    const token = _readAdminSession();
+    if (!token) {
+      _showSecurityError('Ta session a expiré, recharge la page et resaisis le secret (code RDV-101).');
+      return;
+    }
+
+    const originalText = saveBtn ? saveBtn.textContent : 'ENREGISTRER';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'VÉRIFICATION…';
+    }
+
+    try {
+      const response = await fetch(ADMIN_CHANGE_SECRET_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'x-admin-secret': currentSecret,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          newSecret: newSecret,
+          confirmSecret: confirmSecret
+        })
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+
+      if (
+        response.status === 200 &&
+        data &&
+        typeof data.token === 'string' &&
+        data.token !== '' &&
+        typeof data.expiresAt === 'number' &&
+        Number.isFinite(data.expiresAt)
+      ) {
+        _storeAdminSession(data.token, data.expiresAt);
+        _resetSecurityFields();
+        if (typeof GlassDrawer !== 'undefined') {
+          GlassDrawer.close('admin-security-drawer');
+        }
+        showToast('success', 'Secret admin changé. Les autres sessions admin sont fermées.');
+        return;
+      }
+
+      _showSecurityError(_securityErrorText(data));
+      if (data && data.code === 'RDV-101') {
+        _clearAdminSession();
+      }
+    } catch (_) {
+      _showSecurityError('Impossible de joindre le serveur. Vérifie ta connexion et réessaie (code RDV-102).');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+    }
+  }
+
   function submitSecret() {
     const submitBtn = document.getElementById('admin-secret-submit');
     if (submitBtn && submitBtn.disabled) return;
@@ -711,6 +870,42 @@
     if (saveDetailBtn) {
       saveDetailBtn.addEventListener('click', submitDetailSave);
     }
+
+    const securityBtn = document.getElementById('admin-security-btn');
+    if (securityBtn) {
+      securityBtn.addEventListener('click', function() {
+        if (typeof GlassDrawer !== 'undefined' && GlassDrawer.isOpen('admin-detail-drawer')) {
+          GlassDrawer.close('admin-detail-drawer');
+        }
+        openSecurityDrawer(securityBtn);
+      });
+    }
+
+    _watchSecurityDrawerClose();
+
+    const securityCloseBtn = document.getElementById('admin-security-close-btn');
+    const securityCloseBackdrop = document.getElementById('admin-security-close-backdrop');
+    if (securityCloseBtn) {
+      securityCloseBtn.addEventListener('click', closeSecurityDrawer);
+    }
+    if (securityCloseBackdrop) {
+      securityCloseBackdrop.addEventListener('click', closeSecurityDrawer);
+    }
+
+    const securitySaveBtn = document.getElementById('admin-security-save');
+    if (securitySaveBtn) {
+      securitySaveBtn.addEventListener('click', submitSecretChange);
+    }
+
+    ['admin-security-current', 'admin-security-new', 'admin-security-confirm'].forEach(function(id) {
+      const field = document.getElementById(id);
+      if (!field) return;
+      field.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          submitSecretChange();
+        }
+      });
+    });
 
     const token = _readAdminSession();
     if (token) {

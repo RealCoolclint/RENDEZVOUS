@@ -32,6 +32,9 @@
     <div id="admin-content" style="display: none;">
     <header class="top-bar">
         <h1>ADMIN — RENDEZVOUS</h1>
+        <div class="top-bar-actions">
+            <button type="button" id="admin-security-btn" class="nav-btn">SÉCURITÉ</button>
+        </div>
     </header>
 
     <main>
@@ -125,9 +128,42 @@
         </aside>
     </div>
 
+    <div id="admin-security-drawer" class="glass-drawer glass-drawer--left" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="admin-security-title">
+        <button type="button" class="glass-drawer-backdrop" aria-label="Fermer" id="admin-security-close-backdrop"></button>
+        <div class="glass-drawer-bloom" aria-hidden="true"></div>
+        <aside class="glass-drawer-panel">
+            <header class="glass-drawer-header">
+                <div class="glass-drawer-header-text">
+                    <p class="glass-drawer-eyebrow">Sécurité</p>
+                    <h2 id="admin-security-title">CHANGER LE SECRET</h2>
+                </div>
+                <div class="glass-drawer-header-actions">
+                    <button type="button" class="glass-drawer-close" id="admin-security-close-btn" aria-label="Fermer">FERMER</button>
+                </div>
+            </header>
+            <div class="glass-drawer-body">
+                <div class="form-group">
+                    <label for="admin-security-current">SECRET ACTUEL</label>
+                    <input type="password" id="admin-security-current" class="input input--compact" autocomplete="current-password" />
+                </div>
+                <div class="form-group">
+                    <label for="admin-security-new">NOUVEAU SECRET</label>
+                    <input type="password" id="admin-security-new" class="input input--compact" autocomplete="new-password" />
+                </div>
+                <div class="form-group">
+                    <label for="admin-security-confirm">CONFIRMATION</label>
+                    <input type="password" id="admin-security-confirm" class="input input--compact" autocomplete="new-password" />
+                </div>
+                <p class="glass-drawer-rgpd-lead">Au moins 8 caractères, avec au moins une lettre, un chiffre et un symbole du clavier, sans accent. Pas d'espace au début ni à la fin. Après le changement, toutes les autres sessions admin sont fermées.</p>
+                <p id="admin-security-error" class="admin-auth-error" style="display: none;"></p>
+                <button type="button" id="admin-security-save" class="ps-connect-btn ps-connect-btn--drawer">ENREGISTRER</button>
+            </div>
+        </aside>
+    </div>
+
     <div id="toasts" class="toast-container"></div>
 
     <script src="glass-drawer.js?v=7"></script>
-    <script src="admin.js?v=5"></script>
+    <script src="admin.js?v=6"></script>
 </body>
 </html>
