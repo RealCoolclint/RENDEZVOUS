@@ -7,8 +7,13 @@
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-session';
   const ADMIN_CHANGE_SECRET_URL =
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-change-secret';
+  const ADMIN_REQUEST_RESET_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-request-reset';
+  const ADMIN_COMPLETE_RESET_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-complete-reset';
   const SESSION_KEY = 'admin_session';
   const LEGACY_SECRET_KEY = 'admin_secret';
+  let pendingResetToken = null;
 
   function _storeAdminSession(token, expiresAt) {
     localStorage.setItem(SESSION_KEY, JSON.stringify({ value: token, expiresAt: expiresAt }));
@@ -776,6 +781,186 @@
     }
   }
 
+  function _clearResetFields() {
+    ['admin-reset-new', 'admin-reset-confirm'].forEach(function(id) {
+      const field = document.getElementById(id);
+      if (field) field.value = '';
+    });
+    const errorEl = document.getElementById('admin-reset-error');
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    errorEl.style.display = 'none';
+  }
+
+  function showResetError(message) {
+    const errorEl = document.getElementById('admin-reset-error');
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+  }
+
+  function showResetScreen() {
+    const authScreen = document.getElementById('admin-auth-screen');
+    const resetScreen = document.getElementById('admin-reset-screen');
+    const backdrop = document.getElementById('admin-auth-backdrop');
+    const content = document.getElementById('admin-content');
+    if (authScreen) authScreen.style.display = 'none';
+    if (resetScreen) resetScreen.style.display = 'flex';
+    if (backdrop) backdrop.style.display = '';
+    if (content) content.style.display = 'none';
+    _clearResetFields();
+    const newField = document.getElementById('admin-reset-new');
+    if (newField) newField.focus();
+  }
+
+  function showAuthScreenFromReset() {
+    pendingResetToken = null;
+    _clearResetFields();
+    const resetScreen = document.getElementById('admin-reset-screen');
+    const authScreen = document.getElementById('admin-auth-screen');
+    if (resetScreen) resetScreen.style.display = 'none';
+    if (authScreen) authScreen.style.display = 'flex';
+    const input = document.getElementById('admin-secret-input');
+    if (input) input.focus();
+  }
+
+  function consumeResetLink() {
+    if (location.hash.indexOf('#reset=') !== 0) return false;
+    let token = '';
+    try {
+      token = decodeURIComponent(location.hash.slice('#reset='.length));
+    } catch (_) {
+      token = '';
+    }
+    history.replaceState(history.state, '', location.pathname + location.search);
+    if (token === '') return false;
+    pendingResetToken = token;
+    showResetScreen();
+    return true;
+  }
+
+  async function requestAdminReset() {
+    const forgotBtn = document.getElementById('admin-forgot-btn');
+    if (forgotBtn && forgotBtn.disabled) return;
+
+    const originalText = forgotBtn ? forgotBtn.textContent : 'SECRET OUBLIÉ';
+    if (forgotBtn) {
+      forgotBtn.disabled = true;
+      forgotBtn.textContent = 'ENVOI…';
+    }
+
+    try {
+      const response = await fetch(ADMIN_REQUEST_RESET_URL, {
+        method: 'POST'
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+
+      if (response.status === 200) {
+        hideAuthError();
+        const serverMessage = data && typeof data.message === 'string' ? data.message : '';
+        showToast(
+          'success',
+          serverMessage !== ''
+            ? serverMessage
+            : 'Un lien vient d\'être envoyé à l\'adresse de secours de l\'admin. Il est valable 15 minutes.'
+        );
+        return;
+      }
+
+      showAuthError(_securityErrorText(data));
+    } catch (_) {
+      showAuthError('Impossible de joindre le serveur. Vérifie ta connexion et réessaie (code RDV-102).');
+    } finally {
+      if (forgotBtn) {
+        forgotBtn.disabled = false;
+        forgotBtn.textContent = originalText;
+      }
+    }
+  }
+
+  async function submitAdminReset() {
+    const saveBtn = document.getElementById('admin-reset-save');
+    if (saveBtn && saveBtn.disabled) return;
+
+    const newField = document.getElementById('admin-reset-new');
+    const confirmField = document.getElementById('admin-reset-confirm');
+    if (!newField || !confirmField) return;
+
+    const newSecret = newField.value;
+    const confirmSecret = confirmField.value;
+
+    if (newSecret === '' || confirmSecret === '') {
+      showResetError('Remplis les deux champs.');
+      return;
+    }
+
+    if (pendingResetToken === null) {
+      showResetError('Ce lien n\'est plus disponible. Demande un nouveau lien depuis l\'écran de connexion (code RDV-103).');
+      return;
+    }
+
+    const originalText = saveBtn ? saveBtn.textContent : 'ENREGISTRER';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'VÉRIFICATION…';
+    }
+
+    try {
+      const response = await fetch(ADMIN_COMPLETE_RESET_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + pendingResetToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          newSecret: newSecret,
+          confirmSecret: confirmSecret
+        })
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+
+      if (
+        response.status === 200 &&
+        data &&
+        typeof data.token === 'string' &&
+        data.token !== '' &&
+        typeof data.expiresAt === 'number' &&
+        Number.isFinite(data.expiresAt)
+      ) {
+        const sessionToken = data.token;
+        _storeAdminSession(sessionToken, data.expiresAt);
+        pendingResetToken = null;
+        newField.value = '';
+        confirmField.value = '';
+        const resetScreen = document.getElementById('admin-reset-screen');
+        if (resetScreen) resetScreen.style.display = 'none';
+        showToast('success', 'Nouveau secret enregistré. Les autres sessions admin sont fermées.');
+        await openAdminWithToken(sessionToken, false);
+        return;
+      }
+
+      showResetError(_securityErrorText(data));
+      if (data && (data.code === 'RDV-103' || data.code === 'RDV-104')) {
+        pendingResetToken = null;
+      }
+    } catch (_) {
+      showResetError('Impossible de joindre le serveur. Vérifie ta connexion et réessaie (code RDV-102).');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+    }
+  }
+
   function submitSecret() {
     const submitBtn = document.getElementById('admin-secret-submit');
     if (submitBtn && submitBtn.disabled) return;
@@ -789,6 +974,9 @@
   }
 
   document.addEventListener('DOMContentLoaded', function() {
+    const resetLinkAtLoad = consumeResetLink();
+    window.addEventListener('hashchange', consumeResetLink);
+
     localStorage.removeItem(LEGACY_SECRET_KEY);
 
     const submitBtn = document.getElementById('admin-secret-submit');
@@ -907,11 +1095,38 @@
       });
     });
 
-    const token = _readAdminSession();
-    if (token) {
-      openAdminWithToken(token, true);
-    } else if (input) {
-      input.focus();
+    const forgotBtn = document.getElementById('admin-forgot-btn');
+    if (forgotBtn) {
+      forgotBtn.addEventListener('click', requestAdminReset);
+    }
+
+    const resetSaveBtn = document.getElementById('admin-reset-save');
+    if (resetSaveBtn) {
+      resetSaveBtn.addEventListener('click', submitAdminReset);
+    }
+
+    const resetBackBtn = document.getElementById('admin-reset-back');
+    if (resetBackBtn) {
+      resetBackBtn.addEventListener('click', showAuthScreenFromReset);
+    }
+
+    ['admin-reset-new', 'admin-reset-confirm'].forEach(function(id) {
+      const field = document.getElementById(id);
+      if (!field) return;
+      field.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          submitAdminReset();
+        }
+      });
+    });
+
+    if (!resetLinkAtLoad) {
+      const token = _readAdminSession();
+      if (token) {
+        openAdminWithToken(token, true);
+      } else if (input) {
+        input.focus();
+      }
     }
   });
 })();

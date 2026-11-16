@@ -2089,6 +2089,19 @@ body:not(.glass-drawer-open) .app-container {
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
+.admin-auth-screen .admin-auth-text-btn {
+  align-self: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.72em;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
 .admin-auth-error {
   color: var(--danger);
   font-family: 'Lato', sans-serif;
