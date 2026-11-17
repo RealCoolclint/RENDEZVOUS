@@ -2102,6 +2102,46 @@ body:not(.glass-drawer-open) .app-container {
   cursor: pointer;
 }
 
+.secret-field {
+  position: relative;
+  width: 100%;
+}
+
+.secret-field .input {
+  width: 100%;
+  padding-right: 5.5em;
+}
+
+.secret-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.72em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.secret-toggle-btn:hover,
+.secret-toggle-btn:focus-visible {
+  color: var(--text-primary);
+}
+
+.secret-toggle-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .admin-auth-error {
   color: var(--danger);
   font-family: 'Lato', sans-serif;

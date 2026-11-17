@@ -599,6 +599,7 @@
         }
 
         _storeAdminSession(token, expiresAt);
+        _hideAllSecrets();
         await openAdminWithToken(token, false);
         return;
       }
@@ -624,11 +625,45 @@
     }
   }
 
+  function _applySecretToggle(button, revealed) {
+    if (!button) return null;
+    const field = document.getElementById(button.getAttribute('aria-controls'));
+    if (!field) return null;
+    const value = field.value;
+    field.type = revealed ? 'text' : 'password';
+    if (field.value !== value) field.value = value;
+    button.textContent = revealed ? 'CACHER' : 'VOIR';
+    button.setAttribute('aria-pressed', revealed ? 'true' : 'false');
+    button.setAttribute('aria-label', revealed ? 'Masquer le secret' : 'Afficher le secret');
+    return field;
+  }
+
+  function _toggleSecret(button) {
+    const field = document.getElementById(button.getAttribute('aria-controls'));
+    if (!field) return;
+    const revealed = field.type === 'password';
+    _applySecretToggle(button, revealed);
+    const end = field.value.length;
+    field.focus();
+    if (typeof field.setSelectionRange === 'function') {
+      try {
+        field.setSelectionRange(end, end);
+      } catch (_) {}
+    }
+  }
+
+  function _hideAllSecrets() {
+    document.querySelectorAll('.secret-toggle-btn').forEach(function(button) {
+      _applySecretToggle(button, false);
+    });
+  }
+
   function _resetSecurityFields() {
     ['admin-security-current', 'admin-security-new', 'admin-security-confirm'].forEach(function(id) {
       const field = document.getElementById(id);
       if (field) field.value = '';
     });
+    _hideAllSecrets();
   }
 
   function _showSecurityError(message) {
@@ -787,9 +822,11 @@
       if (field) field.value = '';
     });
     const errorEl = document.getElementById('admin-reset-error');
-    if (!errorEl) return;
-    errorEl.textContent = '';
-    errorEl.style.display = 'none';
+    if (errorEl) {
+      errorEl.textContent = '';
+      errorEl.style.display = 'none';
+    }
+    _hideAllSecrets();
   }
 
   function showResetError(message) {
@@ -943,6 +980,7 @@
         const resetScreen = document.getElementById('admin-reset-screen');
         if (resetScreen) resetScreen.style.display = 'none';
         showToast('success', 'Nouveau secret enregistré. Les autres sessions admin sont fermées.');
+        _hideAllSecrets();
         await openAdminWithToken(sessionToken, false);
         return;
       }
@@ -1117,6 +1155,26 @@
         if (e.key === 'Enter') {
           submitAdminReset();
         }
+      });
+    });
+
+    document.querySelectorAll('.secret-toggle-btn').forEach(function(button) {
+      button.addEventListener('keydown', function(event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        event.stopPropagation();
+      });
+      button.addEventListener('keyup', function(event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        event.stopPropagation();
+        _toggleSecret(button);
+      });
+      button.addEventListener('click', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.detail === 0) return;
+        _toggleSecret(button);
       });
     });
 
