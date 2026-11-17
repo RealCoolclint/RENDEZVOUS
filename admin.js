@@ -11,9 +11,20 @@
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-request-reset';
   const ADMIN_COMPLETE_RESET_URL =
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-complete-reset';
+  const ADMIN_PASSKEY_REGISTER_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-passkey-register';
+  const ADMIN_PASSKEY_MANAGE_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-passkey-manage';
   const SESSION_KEY = 'admin_session';
   const LEGACY_SECRET_KEY = 'admin_secret';
   let pendingResetToken = null;
+  let passkeyOptions = null;
+  let passkeyChallengeToken = null;
+  let passkeySecret = null;
+  let passkeyAddTimer = null;
+  let passkeyAddGeneration = 0;
+  let passkeyListGeneration = 0;
+  let passkeyConfirm = null;
 
   function _storeAdminSession(token, expiresAt) {
     localStorage.setItem(SESSION_KEY, JSON.stringify({ value: token, expiresAt: expiresAt }));
@@ -659,7 +670,7 @@
   }
 
   function _resetSecurityFields() {
-    ['admin-security-current', 'admin-security-new', 'admin-security-confirm'].forEach(function(id) {
+    ['admin-security-current', 'admin-security-new', 'admin-security-confirm', 'admin-passkeys-secret'].forEach(function(id) {
       const field = document.getElementById(id);
       if (field) field.value = '';
     });
@@ -700,6 +711,564 @@
     return serverError + ' (code ' + data.code + ')';
   }
 
+  function _b64urlToBuffer(value) {
+    if (typeof value !== 'string' || value === '') return new ArrayBuffer(0);
+    const padLength = (4 - (value.length % 4)) % 4;
+    let padding = '';
+    for (let i = 0; i < padLength; i++) padding += '=';
+    const b64 = value.replace(/-/g, '+').replace(/_/g, '/') + padding;
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+  }
+
+  function _bufferToB64url(buffer) {
+    const bytes = buffer instanceof ArrayBuffer
+      ? new Uint8Array(buffer)
+      : new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
+  function _passkeyNetworkError() {
+    return 'Impossible de joindre le serveur. Vérifie ta connexion et réessaie (code RDV-102).';
+  }
+
+  function _showPasskeyError(message) {
+    const errorEl = document.getElementById('admin-passkeys-error');
+    if (!errorEl) return;
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+  }
+
+  function _hidePasskeyError() {
+    const errorEl = document.getElementById('admin-passkeys-error');
+    if (!errorEl) return;
+    errorEl.textContent = '';
+    errorEl.style.display = 'none';
+  }
+
+  function _passkeySecretToggle() {
+    return document.querySelector('[aria-controls="admin-passkeys-secret"]');
+  }
+
+  function _clearPasskeySecretField() {
+    const field = document.getElementById('admin-passkeys-secret');
+    if (field) field.value = '';
+    _applySecretToggle(_passkeySecretToggle(), false);
+  }
+
+  function _clearPasskeyAddTimer() {
+    if (passkeyAddTimer !== null) {
+      clearTimeout(passkeyAddTimer);
+      passkeyAddTimer = null;
+    }
+  }
+
+  function _cancelPasskeyAdd() {
+    passkeyAddGeneration += 1;
+    passkeyOptions = null;
+    passkeyChallengeToken = null;
+    passkeySecret = null;
+    _clearPasskeyAddTimer();
+    _clearPasskeySecretField();
+    const confirmBtn = document.getElementById('admin-passkeys-add-confirm');
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'VALIDER';
+    }
+    const form = document.getElementById('admin-passkeys-add-form');
+    if (form) form.hidden = true;
+    const addBtn = document.getElementById('admin-passkeys-add');
+    if (addBtn) addBtn.hidden = false;
+  }
+
+  function _passkeysUnsupported() {
+    return typeof window.PublicKeyCredential === 'undefined' || !navigator.credentials;
+  }
+
+  function _formatPasskeyAddedAt(createdAt) {
+    try {
+      const date = new Date(createdAt);
+      if (Number.isNaN(date.getTime())) return 'Ajouté le';
+      const parts = new Intl.DateTimeFormat('fr-FR', {
+        timeZone: 'Europe/Paris',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23'
+      }).formatToParts(date);
+      const bag = {};
+      parts.forEach(function(part) {
+        bag[part.type] = part.value;
+      });
+      return 'Ajouté le ' + (bag.day || '') + '/' + (bag.month || '') + '/' + (bag.year || '') + ' à ' + (bag.hour || '') + ':' + (bag.minute || '');
+    } catch (_) {
+      return 'Ajouté le';
+    }
+  }
+
+  function _passkeyDeviceId(device) {
+    if (!device || typeof device !== 'object') return null;
+    if (typeof device.id === 'string' && device.id !== '') return device.id;
+    if (typeof device.id === 'number' && Number.isFinite(device.id)) return device.id;
+    return null;
+  }
+
+  function _clearPasskeyListPresentation() {
+    passkeyConfirm = null;
+    const list = document.getElementById('admin-passkeys-list');
+    if (list) list.replaceChildren();
+    const countEl = document.getElementById('admin-passkeys-count');
+    if (countEl) countEl.textContent = '';
+    const emptyEl = document.getElementById('admin-passkeys-empty');
+    if (emptyEl) emptyEl.hidden = true;
+    const addBtn = document.getElementById('admin-passkeys-add');
+    if (addBtn) addBtn.disabled = false;
+  }
+
+  function _buildPasskeyRemoveButton(deviceId) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'admin-passkey-btn admin-passkey-btn--danger';
+    button.textContent = 'RETIRER';
+    button.addEventListener('click', function() {
+      const actions = button.parentElement;
+      const row = actions ? actions.parentElement : null;
+      if (!row) return;
+      _openPasskeyRemoveConfirm(row, deviceId);
+    });
+    return button;
+  }
+
+  function _restorePasskeyConfirmRow() {
+    const current = passkeyConfirm;
+    passkeyConfirm = null;
+    if (!current || !current.row || !current.row.isConnected) return;
+    const actions = current.row.querySelector('.admin-passkey-actions');
+    if (!actions) return;
+    actions.replaceChildren(_buildPasskeyRemoveButton(current.id));
+  }
+
+  function _releasePasskeyRemoveButtons(confirmBtn, cancelBtn) {
+    if (confirmBtn && confirmBtn.isConnected) confirmBtn.disabled = false;
+    if (cancelBtn && cancelBtn.isConnected) cancelBtn.disabled = false;
+  }
+
+  function _openPasskeyRemoveConfirm(row, deviceId) {
+    _restorePasskeyConfirmRow();
+    const actions = row.querySelector('.admin-passkey-actions');
+    if (!actions) return;
+    const text = document.createElement('span');
+    text.className = 'admin-passkey-confirm-text';
+    text.textContent = 'RETIRER CET APPAREIL ?';
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.className = 'admin-passkey-btn admin-passkey-btn--danger';
+    confirmBtn.textContent = 'CONFIRMER';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'admin-passkey-btn';
+    cancelBtn.textContent = 'ANNULER';
+    cancelBtn.addEventListener('click', function() {
+      _restorePasskeyConfirmRow();
+    });
+    confirmBtn.addEventListener('click', function() {
+      if (confirmBtn.disabled) return;
+      _submitPasskeyRemove(deviceId, confirmBtn, cancelBtn);
+    });
+    actions.replaceChildren();
+    actions.appendChild(text);
+    actions.appendChild(confirmBtn);
+    actions.appendChild(cancelBtn);
+    passkeyConfirm = { row: row, id: deviceId };
+  }
+
+  async function _submitPasskeyRemove(deviceId, confirmBtn, cancelBtn) {
+    confirmBtn.disabled = true;
+    cancelBtn.disabled = true;
+    const token = _readAdminSession();
+    if (!token) {
+      _showPasskeyError(_securityErrorText({ code: 'RDV-101' }));
+      _releasePasskeyRemoveButtons(confirmBtn, cancelBtn);
+      return;
+    }
+    try {
+      const response = await fetch(ADMIN_PASSKEY_MANAGE_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'remove', id: deviceId })
+      });
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+      if (
+        response.status === 200 &&
+        data &&
+        data.success === true &&
+        Array.isArray(data.devices)
+      ) {
+        _hidePasskeyError();
+        _renderPasskeys(data.devices, data.max);
+        showToast('success', 'Appareil retiré. Pour couper aussi les sessions déjà ouvertes, change le secret.');
+        return;
+      }
+      _showPasskeyError(_securityErrorText(data));
+      if (data && data.code === 'RDV-101') _clearAdminSession();
+      if (data && data.code === 'RDV-412') _loadPasskeys(true);
+      _releasePasskeyRemoveButtons(confirmBtn, cancelBtn);
+    } catch (_) {
+      _showPasskeyError(_passkeyNetworkError());
+      _releasePasskeyRemoveButtons(confirmBtn, cancelBtn);
+    }
+  }
+
+  function _renderPasskeys(devices, max) {
+    passkeyConfirm = null;
+    const list = document.getElementById('admin-passkeys-list');
+    if (list) list.replaceChildren();
+    const items = Array.isArray(devices) ? devices : [];
+    items.forEach(function(device) {
+      if (!device || typeof device !== 'object') return;
+      const row = document.createElement('li');
+      row.className = 'admin-passkey-row';
+      const name = document.createElement('span');
+      name.className = 'admin-passkey-name';
+      name.textContent = typeof device.name === 'string' ? device.name : '';
+      const date = document.createElement('span');
+      date.className = 'admin-passkey-date';
+      date.textContent = _formatPasskeyAddedAt(device.createdAt);
+      const actions = document.createElement('div');
+      actions.className = 'admin-passkey-actions';
+      const deviceId = _passkeyDeviceId(device);
+      if (deviceId !== null) actions.appendChild(_buildPasskeyRemoveButton(deviceId));
+      row.appendChild(name);
+      row.appendChild(date);
+      row.appendChild(actions);
+      if (list) list.appendChild(row);
+    });
+    const n = list ? list.children.length : 0;
+    const hasMax = typeof max === 'number' && Number.isFinite(max);
+    const countEl = document.getElementById('admin-passkeys-count');
+    if (countEl) {
+      const noun = n >= 2 ? 'APPAREILS' : 'APPAREIL';
+      let text = n + ' ' + noun;
+      if (hasMax) {
+        text += ' SUR ' + String(max);
+        if (n >= max) text += ' · LIMITE ATTEINTE';
+      }
+      countEl.textContent = text;
+    }
+    const emptyEl = document.getElementById('admin-passkeys-empty');
+    if (emptyEl) emptyEl.hidden = n !== 0;
+    const addBtn = document.getElementById('admin-passkeys-add');
+    if (addBtn) addBtn.disabled = hasMax && n >= max;
+  }
+
+  async function _loadPasskeys(keepError) {
+    const generation = ++passkeyListGeneration;
+    const token = _readAdminSession();
+    if (!token) {
+      if (generation !== passkeyListGeneration) return;
+      _showPasskeyError(_securityErrorText({ code: 'RDV-101' }));
+      _clearPasskeyListPresentation();
+      return;
+    }
+    try {
+      const response = await fetch(ADMIN_PASSKEY_MANAGE_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'list' })
+      });
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+      if (generation !== passkeyListGeneration) return;
+      if (response.status === 200 && data && Array.isArray(data.devices)) {
+        if (!keepError) _hidePasskeyError();
+        _renderPasskeys(data.devices, data.max);
+        return;
+      }
+      _showPasskeyError(_securityErrorText(data));
+      if (data && data.code === 'RDV-101') _clearAdminSession();
+      _clearPasskeyListPresentation();
+    } catch (_) {
+      if (generation !== passkeyListGeneration) return;
+      _showPasskeyError(_passkeyNetworkError());
+      _clearPasskeyListPresentation();
+    }
+  }
+
+  function _openPasskeyAddForm() {
+    const addBtn = document.getElementById('admin-passkeys-add');
+    if (addBtn && addBtn.disabled) return;
+    _hidePasskeyError();
+    if (_passkeysUnsupported()) {
+      _showPasskeyError('Ce navigateur ne sait pas utiliser Touch ID pour l\'admin. Ouvre l\'admin dans Safari (code RDV-201).');
+      return;
+    }
+    const form = document.getElementById('admin-passkeys-add-form');
+    if (form) form.hidden = false;
+    if (addBtn) addBtn.hidden = true;
+    const field = document.getElementById('admin-passkeys-secret');
+    if (field) field.focus();
+  }
+
+  function _startPasskeyAddTimer() {
+    _clearPasskeyAddTimer();
+    passkeyAddTimer = setTimeout(function() {
+      passkeyAddTimer = null;
+      _cancelPasskeyAdd();
+      _showPasskeyError('Délai dépassé, recommence l\'ajout de l\'appareil (code RDV-410).');
+    }, 100000);
+  }
+
+  function _restorePasskeyValidateButton() {
+    const confirmBtn = document.getElementById('admin-passkeys-add-confirm');
+    if (!confirmBtn) return;
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'VALIDER';
+  }
+
+  async function _requestPasskeyOptions() {
+    const confirmBtn = document.getElementById('admin-passkeys-add-confirm');
+    if (confirmBtn && confirmBtn.disabled) return;
+    if (confirmBtn && (confirmBtn.textContent || '').trim() !== 'VALIDER') return;
+    const field = document.getElementById('admin-passkeys-secret');
+    const secret = field ? (field.value || '').trim() : '';
+    if (secret === '') {
+      _showPasskeyError('Retape le secret.');
+      return;
+    }
+    const token = _readAdminSession();
+    if (!token) {
+      _showPasskeyError(_securityErrorText({ code: 'RDV-101' }));
+      return;
+    }
+    _hidePasskeyError();
+    const generation = passkeyAddGeneration;
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'VÉRIFICATION…';
+    }
+    try {
+      const response = await fetch(ADMIN_PASSKEY_REGISTER_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'x-admin-secret': secret,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ step: 'options' })
+      });
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+      if (generation !== passkeyAddGeneration) return;
+      if (
+        response.status === 200 &&
+        data &&
+        data.options &&
+        typeof data.options === 'object' &&
+        typeof data.challengeToken === 'string' &&
+        data.challengeToken !== ''
+      ) {
+        passkeyOptions = data.options;
+        passkeyChallengeToken = data.challengeToken;
+        passkeySecret = secret;
+        _clearPasskeySecretField();
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'POSER LE DOIGT';
+        }
+        _startPasskeyAddTimer();
+        return;
+      }
+      _showPasskeyError(_securityErrorText(data));
+      if (data && data.code === 'RDV-101') _clearAdminSession();
+      _clearPasskeySecretField();
+      _restorePasskeyValidateButton();
+    } catch (_) {
+      if (generation !== passkeyAddGeneration) return;
+      _showPasskeyError(_passkeyNetworkError());
+      _clearPasskeySecretField();
+      _restorePasskeyValidateButton();
+    }
+  }
+
+  function _publicKeyFromOptions(options) {
+    if (!options || typeof options !== 'object' || typeof options.challenge !== 'string') {
+      throw new Error('options');
+    }
+    const publicKey = Object.assign({}, options);
+    publicKey.challenge = _b64urlToBuffer(options.challenge);
+    if (options.user && typeof options.user === 'object') {
+      publicKey.user = Object.assign({}, options.user);
+      publicKey.user.id = _b64urlToBuffer(typeof options.user.id === 'string' ? options.user.id : '');
+    }
+    if (Array.isArray(options.excludeCredentials)) {
+      publicKey.excludeCredentials = options.excludeCredentials.map(function(cred) {
+        const copy = Object.assign({}, cred);
+        copy.id = _b64urlToBuffer(cred && typeof cred.id === 'string' ? cred.id : '');
+        return copy;
+      });
+    }
+    return publicKey;
+  }
+
+  function _passkeyCreationErrorText(error) {
+    const name = error && typeof error.name === 'string' ? error.name : '';
+    if (name === 'NotAllowedError') {
+      return 'Touch ID a été annulé ou le délai est dépassé. Rien n\'a été enregistré (code RDV-202).';
+    }
+    if (name === 'InvalidStateError') {
+      return 'Cet appareil est déjà enregistré (code RDV-203).';
+    }
+    return 'Touch ID n\'a pas pu s\'ouvrir sur cet appareil. Ouvre l\'admin dans Safari et réessaie (code RDV-204).';
+  }
+
+  function _rejectPasskeyCreation(error, generation) {
+    if (generation !== passkeyAddGeneration) return;
+    _showPasskeyError(_passkeyCreationErrorText(error));
+    _cancelPasskeyAdd();
+  }
+
+  function _serializePasskeyCredential(credential) {
+    const response = credential.response || {};
+    let transports = [];
+    if (typeof response.getTransports === 'function') {
+      try {
+        const listed = response.getTransports();
+        if (Array.isArray(listed)) transports = listed;
+      } catch (_) {}
+    }
+    let clientExtensionResults = {};
+    if (typeof credential.getClientExtensionResults === 'function') {
+      try {
+        const results = credential.getClientExtensionResults();
+        if (results && typeof results === 'object') clientExtensionResults = results;
+      } catch (_) {}
+    }
+    const payload = {
+      id: credential.id,
+      rawId: _bufferToB64url(credential.rawId),
+      type: credential.type,
+      response: {
+        clientDataJSON: _bufferToB64url(response.clientDataJSON),
+        attestationObject: _bufferToB64url(response.attestationObject),
+        transports: transports
+      },
+      clientExtensionResults: clientExtensionResults
+    };
+    if (credential.authenticatorAttachment) {
+      payload.authenticatorAttachment = credential.authenticatorAttachment;
+    }
+    return payload;
+  }
+
+  async function _verifyPasskeyRegistration(credential, generation) {
+    const secret = passkeySecret;
+    const challengeToken = passkeyChallengeToken;
+    const token = _readAdminSession();
+    if (generation !== passkeyAddGeneration) return;
+    if (!token) {
+      _showPasskeyError(_securityErrorText({ code: 'RDV-101' }));
+      _cancelPasskeyAdd();
+      return;
+    }
+    if (!secret || !challengeToken) {
+      _cancelPasskeyAdd();
+      return;
+    }
+    const confirmBtn = document.getElementById('admin-passkeys-add-confirm');
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'ENREGISTREMENT…';
+    }
+    try {
+      const response = await fetch(ADMIN_PASSKEY_REGISTER_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'x-admin-secret': secret,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          step: 'verify',
+          challengeToken: challengeToken,
+          response: _serializePasskeyCredential(credential)
+        })
+      });
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+      if (generation !== passkeyAddGeneration) return;
+      if (response.status === 200 && data && data.success === true) {
+        const name = typeof data.name === 'string' ? data.name : '';
+        showToast('success', 'Appareil ajouté : ' + name + '. Une alerte est partie vers l\'adresse de secours.');
+        _cancelPasskeyAdd();
+        _loadPasskeys();
+        return;
+      }
+      _showPasskeyError(_securityErrorText(data));
+      if (data && data.code === 'RDV-101') _clearAdminSession();
+      _cancelPasskeyAdd();
+    } catch (_) {
+      if (generation !== passkeyAddGeneration) return;
+      _showPasskeyError(_passkeyNetworkError());
+      _cancelPasskeyAdd();
+    }
+  }
+
+  function _onPasskeyAddConfirmClick() {
+    const confirmBtn = document.getElementById('admin-passkeys-add-confirm');
+    if (!confirmBtn || confirmBtn.disabled) return;
+    if ((confirmBtn.textContent || '').trim() === 'POSER LE DOIGT') {
+      const generation = passkeyAddGeneration;
+      let publicKey;
+      try {
+        publicKey = _publicKeyFromOptions(passkeyOptions);
+      } catch (_) {
+        _rejectPasskeyCreation({ name: 'OperationError' }, generation);
+        return;
+      }
+      let creation;
+      try {
+        creation = navigator.credentials.create({ publicKey: publicKey });
+      } catch (error) {
+        _rejectPasskeyCreation(error, generation);
+        return;
+      }
+      confirmBtn.disabled = true;
+      Promise.resolve(creation).then(function(credential) {
+        if (generation !== passkeyAddGeneration) return;
+        if (!credential) {
+          _rejectPasskeyCreation({ name: 'NotAllowedError' }, generation);
+          return;
+        }
+        _verifyPasskeyRegistration(credential, generation);
+      }, function(error) {
+        _rejectPasskeyCreation(error, generation);
+      });
+      return;
+    }
+    _requestPasskeyOptions();
+  }
+
   function openSecurityDrawer(triggerEl) {
     _resetSecurityFields();
     _hideSecurityError();
@@ -708,6 +1277,7 @@
     }
     const currentField = document.getElementById('admin-security-current');
     if (currentField) currentField.focus();
+    _loadPasskeys();
   }
 
   function closeSecurityDrawer() {
@@ -715,6 +1285,10 @@
       GlassDrawer.close('admin-security-drawer');
     }
     _resetSecurityFields();
+    passkeyListGeneration += 1;
+    _cancelPasskeyAdd();
+    _hidePasskeyError();
+    _restorePasskeyConfirmRow();
   }
 
   // GlassDrawer.close accepte onClosed, mais Échap appelle close(id) sans
@@ -730,6 +1304,10 @@
       if (wasOpen && !isOpen) {
         _resetSecurityFields();
         _hideSecurityError();
+        passkeyListGeneration += 1;
+        _cancelPasskeyAdd();
+        _hidePasskeyError();
+        _restorePasskeyConfirmRow();
       }
       wasOpen = isOpen;
     });
@@ -1121,6 +1699,32 @@
     const securitySaveBtn = document.getElementById('admin-security-save');
     if (securitySaveBtn) {
       securitySaveBtn.addEventListener('click', submitSecretChange);
+    }
+
+    const passkeyAddBtn = document.getElementById('admin-passkeys-add');
+    if (passkeyAddBtn) {
+      passkeyAddBtn.addEventListener('click', _openPasskeyAddForm);
+    }
+
+    const passkeyAddConfirmBtn = document.getElementById('admin-passkeys-add-confirm');
+    if (passkeyAddConfirmBtn) {
+      passkeyAddConfirmBtn.addEventListener('click', _onPasskeyAddConfirmClick);
+    }
+
+    const passkeyAddCancelBtn = document.getElementById('admin-passkeys-add-cancel');
+    if (passkeyAddCancelBtn) {
+      passkeyAddCancelBtn.addEventListener('click', _cancelPasskeyAdd);
+    }
+
+    const passkeySecretField = document.getElementById('admin-passkeys-secret');
+    if (passkeySecretField) {
+      passkeySecretField.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        const confirmBtn = document.getElementById('admin-passkeys-add-confirm');
+        if (!confirmBtn || confirmBtn.disabled) return;
+        if ((confirmBtn.textContent || '').trim() !== 'VALIDER') return;
+        _requestPasskeyOptions();
+      });
     }
 
     ['admin-security-current', 'admin-security-new', 'admin-security-confirm'].forEach(function(id) {
