@@ -15,6 +15,9 @@
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-passkey-register';
   const ADMIN_PASSKEY_MANAGE_URL =
     'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-passkey-manage';
+  const ADMIN_PASSKEY_LOGIN_URL =
+    'https://rendezvous-proxy-tranquility.netlify.app/.netlify/functions/admin-passkey-login';
+  const LOGIN_PASSKEY_RENEW_MS = 100000;
   const SESSION_KEY = 'admin_session';
   const LEGACY_SECRET_KEY = 'admin_secret';
   let pendingResetToken = null;
@@ -25,6 +28,12 @@
   let passkeyAddGeneration = 0;
   let passkeyListGeneration = 0;
   let passkeyConfirm = null;
+  let loginPasskeyOptions = null;
+  let loginPasskeyChallengeToken = null;
+  let loginPasskeyRenewTimer = null;
+  let loginPasskeyGeneration = 0;
+  let loginPasskeyVerifying = false;
+  let loginPasskeyVerifyTicket = null;
 
   function _storeAdminSession(token, expiresAt) {
     localStorage.setItem(SESSION_KEY, JSON.stringify({ value: token, expiresAt: expiresAt }));
@@ -83,6 +92,7 @@
   }
 
   function showAdminContent() {
+    _stopLoginPasskey();
     const backdrop = document.getElementById('admin-auth-backdrop');
     const screen = document.getElementById('admin-auth-screen');
     const content = document.getElementById('admin-content');
@@ -1269,6 +1279,239 @@
     _requestPasskeyOptions();
   }
 
+  function _clearLoginPasskeyRenewTimer() {
+    if (loginPasskeyRenewTimer !== null) {
+      clearTimeout(loginPasskeyRenewTimer);
+      loginPasskeyRenewTimer = null;
+    }
+  }
+
+  function _setLoginPasskeyButton(disabled, text) {
+    const button = document.getElementById('admin-passkey-login-btn');
+    if (!button) return;
+    button.disabled = disabled;
+    if (typeof text === 'string') button.textContent = text;
+  }
+
+  function _loginAuthScreenVisible() {
+    const authScreen = document.getElementById('admin-auth-screen');
+    if (!authScreen) return false;
+    return window.getComputedStyle(authScreen).display !== 'none';
+  }
+
+  function _adminContentVisible() {
+    const content = document.getElementById('admin-content');
+    if (!content) return false;
+    return window.getComputedStyle(content).display !== 'none';
+  }
+
+  function _stopLoginPasskey() {
+    loginPasskeyGeneration += 1;
+    _clearLoginPasskeyRenewTimer();
+    loginPasskeyOptions = null;
+    loginPasskeyChallengeToken = null;
+    _setLoginPasskeyButton(true);
+  }
+
+  async function _prepareLoginPasskey(fromClick) {
+    if (_passkeysUnsupported()) {
+      _setLoginPasskeyButton(false);
+      return;
+    }
+    if (document.hidden || !_loginAuthScreenVisible() || _adminContentVisible()) return;
+
+    loginPasskeyGeneration += 1;
+    const generation = loginPasskeyGeneration;
+    _clearLoginPasskeyRenewTimer();
+    loginPasskeyOptions = null;
+    loginPasskeyChallengeToken = null;
+    _setLoginPasskeyButton(true, 'PRÉPARATION…');
+
+    try {
+      const response = await fetch(ADMIN_PASSKEY_LOGIN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ step: 'options' })
+      });
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+      if (generation !== loginPasskeyGeneration) return;
+      if (
+        response.status === 200 &&
+        data &&
+        data.options &&
+        typeof data.options.challenge === 'string' &&
+        data.options.challenge !== '' &&
+        typeof data.challengeToken === 'string' &&
+        data.challengeToken !== ''
+      ) {
+        loginPasskeyOptions = data.options;
+        loginPasskeyChallengeToken = data.challengeToken;
+        _setLoginPasskeyButton(false, 'TOUCH ID');
+        loginPasskeyRenewTimer = setTimeout(function() {
+          loginPasskeyRenewTimer = null;
+          _prepareLoginPasskey(false);
+        }, LOGIN_PASSKEY_RENEW_MS);
+        return;
+      }
+      _setLoginPasskeyButton(false, 'TOUCH ID');
+      if (fromClick) showAuthError(_securityErrorText(data));
+    } catch (_) {
+      if (generation !== loginPasskeyGeneration) return;
+      _setLoginPasskeyButton(false, 'TOUCH ID');
+      if (fromClick) showAuthError(_passkeyNetworkError());
+    }
+  }
+
+  function _serializePasskeyAssertion(credential) {
+    const response = credential.response || {};
+    let clientExtensionResults = {};
+    if (typeof credential.getClientExtensionResults === 'function') {
+      try {
+        const results = credential.getClientExtensionResults();
+        if (results && typeof results === 'object') clientExtensionResults = results;
+      } catch (_) {}
+    }
+    let userHandle = null;
+    if (response.userHandle && response.userHandle.byteLength) {
+      userHandle = _bufferToB64url(response.userHandle);
+      if (userHandle === '') userHandle = null;
+    }
+    const payload = {
+      id: credential.id,
+      rawId: _bufferToB64url(credential.rawId),
+      type: credential.type,
+      response: {
+        clientDataJSON: _bufferToB64url(response.clientDataJSON),
+        authenticatorData: _bufferToB64url(response.authenticatorData),
+        signature: _bufferToB64url(response.signature),
+        userHandle: userHandle
+      },
+      clientExtensionResults: clientExtensionResults
+    };
+    if (credential.authenticatorAttachment) {
+      payload.authenticatorAttachment = credential.authenticatorAttachment;
+    }
+    return payload;
+  }
+
+  function _failLoginPasskeyGet(error, generation) {
+    if (generation !== loginPasskeyGeneration) return;
+    const name = error && typeof error.name === 'string' ? error.name : '';
+    if (name === 'NotAllowedError') {
+      showAuthError('Touch ID a été annulé ou n\'a pas abouti. Réessaie dans Safari, ou connecte-toi avec le secret (code RDV-202).');
+    } else {
+      showAuthError('Touch ID n\'a pas pu s\'ouvrir sur cet appareil. Ouvre l\'admin dans Safari, ou connecte-toi avec le secret (code RDV-204).');
+    }
+    loginPasskeyVerifying = false;
+    _prepareLoginPasskey(false);
+  }
+
+  async function _verifyLoginPasskey(credential, challengeToken, generation) {
+    try {
+      const response = await fetch(ADMIN_PASSKEY_LOGIN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          step: 'verify',
+          challengeToken: challengeToken,
+          response: _serializePasskeyAssertion(credential)
+        })
+      });
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+      if (generation !== loginPasskeyGeneration) return;
+      const token = data && data.token;
+      const expiresAt = data && data.expiresAt;
+      if (
+        response.status === 200 &&
+        typeof token === 'string' &&
+        token !== '' &&
+        typeof expiresAt === 'number'
+      ) {
+        _storeAdminSession(token, expiresAt);
+        const input = document.getElementById('admin-secret-input');
+        if (input) input.value = '';
+        _hideAllSecrets();
+        _stopLoginPasskey();
+        await openAdminWithToken(token, false);
+        return;
+      }
+      showAuthError(_securityErrorText(data));
+      _prepareLoginPasskey(false);
+    } catch (_) {
+      if (generation !== loginPasskeyGeneration) return;
+      showAuthError(_passkeyNetworkError());
+      _prepareLoginPasskey(false);
+    }
+  }
+
+  function _onPasskeyLoginClick() {
+    const button = document.getElementById('admin-passkey-login-btn');
+    if (!button || button.disabled) return;
+    hideAuthError();
+    if (_passkeysUnsupported()) {
+      showAuthError('Ce navigateur ne sait pas utiliser Touch ID pour l\'admin. Ouvre l\'admin dans Safari, ou connecte-toi avec le secret (code RDV-201).');
+      return;
+    }
+    if (!loginPasskeyOptions) {
+      _prepareLoginPasskey(true);
+      return;
+    }
+
+    const generation = loginPasskeyGeneration;
+    let assertion;
+    try {
+      const publicKey = Object.assign({}, loginPasskeyOptions);
+      publicKey.challenge = _b64urlToBuffer(loginPasskeyOptions.challenge);
+      if (Array.isArray(loginPasskeyOptions.allowCredentials)) {
+        publicKey.allowCredentials = loginPasskeyOptions.allowCredentials.map(function(cred) {
+          const copy = Object.assign({}, cred);
+          copy.id = _b64urlToBuffer(cred && typeof cred.id === 'string' ? cred.id : '');
+          return copy;
+        });
+      }
+      assertion = navigator.credentials.get({ publicKey: publicKey });
+    } catch (error) {
+      _failLoginPasskeyGet(error, generation);
+      return;
+    }
+
+    const challengeToken = loginPasskeyChallengeToken;
+    loginPasskeyOptions = null;
+    loginPasskeyChallengeToken = null;
+    _clearLoginPasskeyRenewTimer();
+    const verifyTicket = {};
+    loginPasskeyVerifyTicket = verifyTicket;
+    loginPasskeyVerifying = true;
+    button.disabled = true;
+    button.textContent = 'TOUCH ID…';
+
+    Promise.resolve(assertion).then(function(credential) {
+      if (generation !== loginPasskeyGeneration) return;
+      if (!credential) {
+        _failLoginPasskeyGet({ name: 'NotAllowedError' }, generation);
+        return;
+      }
+      return _verifyLoginPasskey(credential, challengeToken, generation);
+    }, function(error) {
+      if (generation !== loginPasskeyGeneration) return;
+      _failLoginPasskeyGet(error, generation);
+    }).then(function() {
+      if (loginPasskeyVerifyTicket === verifyTicket) loginPasskeyVerifying = false;
+    }, function() {
+      if (loginPasskeyVerifyTicket === verifyTicket) loginPasskeyVerifying = false;
+    });
+  }
+
   function openSecurityDrawer(triggerEl) {
     _resetSecurityFields();
     _hideSecurityError();
@@ -1415,6 +1658,7 @@
   }
 
   function showResetScreen() {
+    _stopLoginPasskey();
     const authScreen = document.getElementById('admin-auth-screen');
     const resetScreen = document.getElementById('admin-reset-screen');
     const backdrop = document.getElementById('admin-auth-backdrop');
@@ -1437,6 +1681,7 @@
     if (authScreen) authScreen.style.display = 'flex';
     const input = document.getElementById('admin-secret-input');
     if (input) input.focus();
+    _prepareLoginPasskey(false);
   }
 
   function consumeResetLink() {
@@ -1782,6 +2027,19 @@
       });
     });
 
+    const passkeyLoginBtn = document.getElementById('admin-passkey-login-btn');
+    if (passkeyLoginBtn) {
+      passkeyLoginBtn.addEventListener('click', _onPasskeyLoginClick);
+    }
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        _stopLoginPasskey();
+      } else {
+        _prepareLoginPasskey(false);
+      }
+    });
+
     if (!resetLinkAtLoad) {
       const token = _readAdminSession();
       if (token) {
@@ -1789,6 +2047,7 @@
       } else if (input) {
         input.focus();
       }
+      _prepareLoginPasskey(false);
     }
   });
 })();

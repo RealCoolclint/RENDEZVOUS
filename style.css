@@ -2102,6 +2102,16 @@ body:not(.glass-drawer-open) .app-container {
   cursor: pointer;
 }
 
+.admin-auth-screen .admin-auth-or {
+  margin: 0;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.72em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
 .secret-field {
   position: relative;
   width: 100%;

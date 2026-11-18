@@ -16,13 +16,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=57">
+    <link rel="stylesheet" href="style.css?v=58">
 </head>
 <body class="dark-theme">
     <div id="admin-auth-backdrop" class="admin-auth-backdrop"></div>
     <div id="admin-auth-screen" class="admin-auth-screen">
         <h2 class="glass-drawer-header">Accès admin</h2>
-        <p class="glass-drawer-rgpd-lead">Saisis le secret administrateur pour continuer.</p>
+        <p class="glass-drawer-rgpd-lead">Connecte-toi avec Touch ID ou avec le secret administrateur.</p>
+        <button type="button" id="admin-passkey-login-btn" class="ps-connect-btn ps-connect-btn--drawer" disabled>TOUCH ID</button>
+        <p class="admin-auth-or">OU AVEC LE SECRET</p>
         <label for="admin-secret-input" class="glass-drawer-rgpd-lead" style="margin-bottom: -8px;">Secret administrateur</label>
         <div class="secret-field">
             <input type="password" id="admin-secret-input" class="input input--compact" autocomplete="off" />
@@ -221,6 +223,6 @@
     <div id="toasts" class="toast-container"></div>
 
     <script src="glass-drawer.js?v=7"></script>
-    <script src="admin.js?v=9"></script>
+    <script src="admin.js?v=10"></script>
 </body>
 </html>
