@@ -4206,6 +4206,7 @@ body:has(#mainView.active) .top-bar-brand {
 
 .admin-passkey-btn:hover,
 .admin-passkey-btn:focus-visible {
+  background: transparent;
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -4223,6 +4224,7 @@ body:has(#mainView.active) .top-bar-brand {
 
 .admin-passkey-btn--danger:hover,
 .admin-passkey-btn--danger:focus-visible {
+  background: transparent;
   border-color: var(--danger);
   color: var(--danger);
   outline-color: var(--danger);
@@ -4248,6 +4250,7 @@ body:has(#mainView.active) .top-bar-brand {
 
 .admin-passkeys-secondary-btn:hover:not(:disabled),
 .admin-passkeys-secondary-btn:focus-visible {
+  background: transparent;
   border-color: var(--accent);
   color: var(--accent);
 }
