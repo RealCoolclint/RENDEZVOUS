@@ -329,7 +329,7 @@
     }
   }
 
-  function showToast(type, message) {
+  function showToast(type, message, duration) {
     const container = document.getElementById('toasts');
     if (!container) return;
 
@@ -337,6 +337,10 @@
     toast.className = 'toast toast-' + type;
     toast.textContent = message;
     container.appendChild(toast);
+
+    const visibleMs = (typeof duration === 'number' && Number.isFinite(duration) && duration > 0)
+      ? duration
+      : 3000;
 
     setTimeout(function() {
       toast.style.transition = 'opacity 300ms ease';
@@ -346,7 +350,7 @@
           toast.parentNode.removeChild(toast);
         }
       }, 300);
-    }, 3000);
+    }, visibleMs);
   }
 
   async function refreshProfilesList() {
@@ -1802,7 +1806,7 @@
         confirmField.value = '';
         const resetScreen = document.getElementById('admin-reset-screen');
         if (resetScreen) resetScreen.style.display = 'none';
-        showToast('success', 'Nouveau secret enregistré. Les autres sessions admin sont fermées.');
+        showToast('success', 'Nouveau secret enregistré. Les autres sessions admin sont fermées et les appareils Touch ID ont été effacés : ajoute de nouveau cet appareil depuis SÉCURITÉ.', 8000);
         _hideAllSecrets();
         await openAdminWithToken(sessionToken, false);
         return;
