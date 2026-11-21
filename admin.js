@@ -343,13 +343,16 @@
       : 3000;
 
     setTimeout(function() {
-      toast.style.transition = 'opacity 300ms ease';
+      function removeToast() {
+        if (!toast.parentNode) return;
+        toast.parentNode.removeChild(toast);
+      }
+      toast.addEventListener('transitionend', function(event) {
+        if (event.propertyName === 'opacity') removeToast();
+      });
+      toast.style.transition = 'opacity var(--transition)';
       toast.style.opacity = '0';
-      setTimeout(function() {
-        if (toast.parentNode) {
-          toast.parentNode.removeChild(toast);
-        }
-      }, 300);
+      setTimeout(removeToast, 1000);
     }, visibleMs);
   }
 

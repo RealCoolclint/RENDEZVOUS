@@ -847,7 +847,7 @@ body:not(.glass-drawer-open) .app-container {
    BOUTONS - MODERNES ET ÉLÉGANTS
    ============================================ */
 .btn {
-  font-family: 'Open Sans', 'Lato', sans-serif;
+  font-family: 'Lato', sans-serif;
   padding: 12px 24px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
@@ -2100,6 +2100,18 @@ body:not(.glass-drawer-open) .app-container {
   font-size: 0.72em;
   letter-spacing: 0.12em;
   cursor: pointer;
+  transition: color var(--transition);
+}
+
+.admin-auth-screen .admin-auth-text-btn:hover,
+.admin-auth-screen .admin-auth-text-btn:focus-visible {
+  color: var(--text-primary);
+  background: none;
+}
+
+.admin-auth-screen .admin-auth-text-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .admin-auth-screen .admin-auth-or {
