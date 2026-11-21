@@ -1830,6 +1830,11 @@
         showToast('success', 'Nouveau secret enregistré. Les autres sessions admin sont fermées et les appareils Touch ID ont été effacés : ajoute de nouveau cet appareil depuis SÉCURITÉ.', 8000);
         _hideAllSecrets();
         await openAdminWithToken(sessionToken, false);
+        if (!_adminContentVisible()) {
+          const authScreen = document.getElementById('admin-auth-screen');
+          if (authScreen) authScreen.style.display = 'flex';
+          _prepareLoginPasskey(false);
+        }
         return;
       }
 
