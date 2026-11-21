@@ -582,6 +582,7 @@
         _clearAdminSession();
         showAuthError('Ta session a expiré, resaisis le secret (code RDV-101).');
         if (input) input.focus();
+        _prepareLoginPasskey(false);
         return;
       }
 
@@ -590,8 +591,10 @@
         data = await response.json();
       } catch (_) {}
       showAuthError(_securityErrorText(data));
+      _prepareLoginPasskey(false);
     } catch (_) {
       showAuthError('Impossible de joindre le serveur. Vérifie ta connexion et réessaie (code RDV-102).');
+      _prepareLoginPasskey(false);
     } finally {
       if (isAutoCheck && submitBtn) {
         submitBtn.disabled = false;
@@ -2066,10 +2069,10 @@
       const token = _readAdminSession();
       if (token) {
         openAdminWithToken(token, true);
-      } else if (input) {
-        input.focus();
+      } else {
+        if (input) input.focus();
+        _prepareLoginPasskey(false);
       }
-      _prepareLoginPasskey(false);
     }
   });
 })();
