@@ -1030,7 +1030,7 @@
     if (addBtn && addBtn.disabled) return;
     _hidePasskeyError();
     if (_passkeysUnsupported()) {
-      _showPasskeyError('Ce navigateur ne sait pas utiliser Touch ID pour l\'admin. Ouvre l\'admin dans Safari (code RDV-201).');
+      _showPasskeyError('Ce navigateur ne sait pas utiliser Touch ID pour l\'admin. Ouvre l\'admin dans Safari ou Opera (code RDV-201).');
       return;
     }
     const form = document.getElementById('admin-passkeys-add-form');
@@ -1151,7 +1151,7 @@
     if (name === 'InvalidStateError') {
       return 'Cet appareil est déjà enregistré (code RDV-203).';
     }
-    return 'Touch ID n\'a pas pu s\'ouvrir sur cet appareil. Ouvre l\'admin dans Safari et réessaie (code RDV-204).';
+    return 'Touch ID n\'a pas pu s\'ouvrir sur cet appareil. Réessaie. Si ça bloque encore, ouvre l\'admin dans Safari (code RDV-204).';
   }
 
   function _rejectPasskeyCreation(error, generation) {
@@ -1407,9 +1407,9 @@
     if (generation !== loginPasskeyGeneration) return;
     const name = error && typeof error.name === 'string' ? error.name : '';
     if (name === 'NotAllowedError') {
-      showAuthError('Touch ID a été annulé ou n\'a pas abouti. Réessaie dans Safari, ou connecte-toi avec le secret (code RDV-202).');
+      showAuthError('Touch ID a été annulé ou n\'a pas abouti. Réessaie, ou connecte-toi avec le secret (code RDV-202).');
     } else {
-      showAuthError('Touch ID n\'a pas pu s\'ouvrir sur cet appareil. Ouvre l\'admin dans Safari, ou connecte-toi avec le secret (code RDV-204).');
+      showAuthError('Touch ID n\'a pas pu s\'ouvrir sur cet appareil. Réessaie. Si ça bloque encore, ouvre l\'admin dans Safari, ou connecte-toi avec le secret (code RDV-204).');
     }
     loginPasskeyVerifying = false;
     _prepareLoginPasskey(false);
@@ -1463,7 +1463,7 @@
     if (!button || button.disabled) return;
     hideAuthError();
     if (_passkeysUnsupported()) {
-      showAuthError('Ce navigateur ne sait pas utiliser Touch ID pour l\'admin. Ouvre l\'admin dans Safari, ou connecte-toi avec le secret (code RDV-201).');
+      showAuthError('Ce navigateur ne sait pas utiliser Touch ID pour l\'admin. Ouvre l\'admin dans Safari ou Opera, ou connecte-toi avec le secret (code RDV-201).');
       return;
     }
     if (!loginPasskeyOptions) {

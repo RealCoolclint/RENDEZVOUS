@@ -17,10 +17,10 @@ Chaque code s'affiche en français simple, suivi de sa mention « (code RDV-NNN)
 
 | Code | Ce qu'on voit | Ce qui se passe | Que faire |
 |---|---|---|---|
-| RDV-201 | Ce navigateur ne sait pas utiliser Touch ID pour l'admin. Ouvre l'admin dans Safari. | Le navigateur ne sait pas utiliser les clés d'accès. | Ouvrir l'admin dans Safari, ou se connecter avec le secret. |
-| RDV-202 | Touch ID a été annulé ou le délai est dépassé. Rien n'a été enregistré. / Touch ID a été annulé ou n'a pas abouti. Réessaie dans Safari, ou connecte-toi avec le secret. | La fenêtre Touch ID a été fermée, son délai a expiré, ou le navigateur ne trouve pas la clé du trousseau iCloud (cas d'Opera). Rien n'a été enregistré ni ouvert. | Réessayer dans Safari. Sinon, se connecter avec le secret. |
+| RDV-201 | Ce navigateur ne sait pas utiliser Touch ID pour l'admin. Ouvre l'admin dans Safari ou Opera. (écran d'ajout) / … Ouvre l'admin dans Safari ou Opera, ou connecte-toi avec le secret. (connexion) | Le navigateur ne sait pas utiliser les clés d'accès. | Ouvrir l'admin dans Safari ou Opera (testés sur Mac), ou se connecter avec le secret. |
+| RDV-202 | Touch ID a été annulé ou le délai est dépassé. Rien n'a été enregistré. (écran d'ajout) / Touch ID a été annulé ou n'a pas abouti. Réessaie, ou connecte-toi avec le secret. (connexion) | La fenêtre Touch ID a été fermée, son délai a expiré, ou le navigateur ne trouve pas la clé du trousseau iCloud. Rien n'a été enregistré ni ouvert. | Réessayer. Sinon, se connecter avec le secret. |
 | RDV-203 | Cet appareil est déjà enregistré. | Pendant un ajout : cet appareil, ou le trousseau iCloud qu'il partage, a déjà une clé pour l'admin. | Rien à faire : l'appareil est déjà dans la liste APPAREILS TOUCH ID. |
-| RDV-204 | Touch ID n'a pas pu s'ouvrir sur cet appareil. Ouvre l'admin dans Safari et réessaie. | Le système a refusé d'ouvrir Touch ID pour une autre raison : réglage de l'appareil, absence de capteur, ou page ouverte ailleurs qu'à l'adresse officielle de l'admin. | Ouvrir l'admin dans Safari, à son adresse officielle, et réessayer. Sinon, se connecter avec le secret. |
+| RDV-204 | Touch ID n'a pas pu s'ouvrir sur cet appareil. Réessaie. Si ça bloque encore, ouvre l'admin dans Safari. (écran d'ajout) / … Réessaie. Si ça bloque encore, ouvre l'admin dans Safari, ou connecte-toi avec le secret. (connexion) | Le système a refusé d'ouvrir Touch ID pour une autre raison : réglage de l'appareil, absence de capteur, ou page ouverte ailleurs qu'à l'adresse officielle de l'admin. | Réessayer, à l'adresse officielle de l'admin. Si ça bloque encore, ouvrir l'admin dans Safari, ou se connecter avec le secret. |
 
 ## 4xx — Saisie et réglages
 
