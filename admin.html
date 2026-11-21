@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=61">
+    <link rel="stylesheet" href="style.css?v=62">
 </head>
 <body class="dark-theme">
     <div id="admin-auth-backdrop" class="admin-auth-backdrop"></div>
@@ -25,11 +25,13 @@
         <p class="glass-drawer-rgpd-lead">Connecte-toi avec Touch ID ou avec le secret administrateur.</p>
         <button type="button" id="admin-passkey-login-btn" class="ps-connect-btn ps-connect-btn--drawer" disabled>TOUCH ID</button>
         <p class="admin-auth-or">OU AVEC LE SECRET</p>
+        <form class="admin-secret-form" novalidate>
         <label for="admin-secret-input" class="glass-drawer-rgpd-lead" style="margin-bottom: -8px;">SECRET ADMINISTRATEUR</label>
         <div class="secret-field">
             <input type="password" id="admin-secret-input" class="input input--compact" autocomplete="off" />
             <button type="button" class="secret-toggle-btn" aria-controls="admin-secret-input" aria-pressed="false" aria-label="Afficher le secret">VOIR</button>
         </div>
+        </form>
         <button type="button" id="admin-secret-submit" class="ps-connect-btn ps-connect-btn--drawer">Valider</button>
         <p id="admin-secret-error" class="admin-auth-error" style="display: none;"></p>
         <button type="button" id="admin-forgot-btn" class="admin-auth-text-btn">SECRET OUBLIÉ</button>
@@ -38,6 +40,7 @@
     <div id="admin-reset-screen" class="admin-auth-screen" style="display: none;">
         <h2 class="glass-drawer-header">NOUVEAU SECRET</h2>
         <p class="glass-drawer-rgpd-lead">Choisis un nouveau secret administrateur. Ce lien ne sert qu'une fois.</p>
+        <form class="admin-secret-form" novalidate>
         <label for="admin-reset-new" class="glass-drawer-rgpd-lead">NOUVEAU SECRET</label>
         <div class="secret-field">
             <input type="password" id="admin-reset-new" class="input input--compact" autocomplete="new-password" />
@@ -48,6 +51,7 @@
             <input type="password" id="admin-reset-confirm" class="input input--compact" autocomplete="new-password" />
             <button type="button" class="secret-toggle-btn" aria-controls="admin-reset-confirm" aria-pressed="false" aria-label="Afficher le secret">VOIR</button>
         </div>
+        </form>
         <p class="glass-drawer-rgpd-lead">Au moins 8 caractères, avec au moins une lettre, un chiffre et un symbole du clavier, sans accent. Pas d'espace au début ni à la fin. Après le changement, toutes les autres sessions admin sont fermées.</p>
         <p id="admin-reset-error" class="admin-auth-error" style="display: none;"></p>
         <button type="button" id="admin-reset-save" class="ps-connect-btn ps-connect-btn--drawer">ENREGISTRER</button>
@@ -169,6 +173,7 @@
             </header>
             <div class="glass-drawer-body">
                 <h3 class="fleet-section-title">CHANGER LE SECRET</h3>
+                <form class="admin-secret-form" novalidate>
                 <div class="form-group">
                     <label for="admin-security-current">SECRET ACTUEL</label>
                     <div class="secret-field">
@@ -190,6 +195,7 @@
                         <button type="button" class="secret-toggle-btn" aria-controls="admin-security-confirm" aria-pressed="false" aria-label="Afficher le secret">VOIR</button>
                     </div>
                 </div>
+                </form>
                 <p class="glass-drawer-rgpd-lead">Au moins 8 caractères, avec au moins une lettre, un chiffre et un symbole du clavier, sans accent. Pas d'espace au début ni à la fin. Après le changement, toutes les autres sessions admin sont fermées.</p>
                 <p id="admin-security-error" class="admin-auth-error" style="display: none;"></p>
                 <button type="button" id="admin-security-save" class="ps-connect-btn ps-connect-btn--drawer">ENREGISTRER</button>
@@ -200,6 +206,7 @@
                     <p id="admin-passkeys-empty" class="glass-drawer-rgpd-lead" hidden>Aucun appareil enregistré.</p>
                     <button type="button" id="admin-passkeys-add" class="admin-passkeys-secondary-btn">AJOUTER CET APPAREIL</button>
                     <div id="admin-passkeys-add-form" hidden>
+                        <form class="admin-secret-form" novalidate>
                         <div class="form-group">
                             <label for="admin-passkeys-secret">SECRET ACTUEL</label>
                             <div class="secret-field">
@@ -207,6 +214,7 @@
                                 <button type="button" class="secret-toggle-btn" aria-controls="admin-passkeys-secret" aria-pressed="false" aria-label="Afficher le secret">VOIR</button>
                             </div>
                         </div>
+                        </form>
                         <p class="glass-drawer-rgpd-lead">Retape le secret, puis confirme sur ton appareil quand il le demande (Touch ID, Face ID ou code).</p>
                         <div class="admin-passkeys-add-actions">
                             <button type="button" id="admin-passkeys-add-confirm" class="ps-connect-btn ps-connect-btn--drawer">VALIDER</button>
@@ -223,6 +231,6 @@
     <div id="toasts" class="toast-container"></div>
 
     <script src="glass-drawer.js?v=7"></script>
-    <script src="admin.js?v=17"></script>
+    <script src="admin.js?v=18"></script>
 </body>
 </html>

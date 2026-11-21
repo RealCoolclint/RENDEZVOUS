@@ -1868,6 +1868,10 @@
     const resetLinkAtLoad = consumeResetLink();
     window.addEventListener('hashchange', consumeResetLink);
 
+    document.querySelectorAll('form.admin-secret-form').forEach(function(form) {
+      form.addEventListener('submit', function(e) { e.preventDefault(); });
+    });
+
     localStorage.removeItem(LEGACY_SECRET_KEY);
 
     const submitBtn = document.getElementById('admin-secret-submit');
