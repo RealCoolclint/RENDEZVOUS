@@ -1224,6 +1224,7 @@
       _cancelPasskeyAdd();
       return;
     }
+    _clearPasskeyAddTimer();
     const confirmBtn = document.getElementById('admin-passkeys-add-confirm');
     if (confirmBtn) {
       confirmBtn.disabled = true;
