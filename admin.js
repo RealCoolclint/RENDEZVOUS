@@ -388,7 +388,7 @@
   function _showSessionExpiredDetailError() {
     const errorEl = document.getElementById('admin-detail-action-error');
     if (errorEl) {
-      errorEl.textContent = 'Session expirée, recharge la page et resaisis le secret.';
+      errorEl.textContent = 'Ta session a expiré, recharge la page et resaisis le secret (code RDV-101).';
       errorEl.style.display = 'block';
     }
   }
@@ -490,13 +490,13 @@
 
       const errorEl = document.getElementById('admin-detail-action-error');
       if (errorEl) {
-        errorEl.textContent = (data && data.error) ? data.error : 'Erreur serveur, réessaie.';
+        errorEl.textContent = (data && data.error) ? data.error : 'Erreur inattendue, réessaie (code RDV-901).';
         errorEl.style.display = 'block';
       }
     } catch (_) {
       const errorEl = document.getElementById('admin-detail-action-error');
       if (errorEl) {
-        errorEl.textContent = 'Erreur de connexion, réessaie.';
+        errorEl.textContent = 'Impossible de joindre le serveur. Vérifie ta connexion et réessaie (code RDV-102).';
         errorEl.style.display = 'block';
       }
     } finally {
@@ -577,14 +577,18 @@
 
       if (response.status === 401) {
         _clearAdminSession();
-        showAuthError('Ta session a expiré, resaisis le secret.');
+        showAuthError('Ta session a expiré, resaisis le secret (code RDV-101).');
         if (input) input.focus();
         return;
       }
 
-      showAuthError('Erreur de connexion, réessaie.');
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+      showAuthError(_securityErrorText(data));
     } catch (_) {
-      showAuthError('Erreur de connexion, réessaie.');
+      showAuthError('Impossible de joindre le serveur. Vérifie ta connexion et réessaie (code RDV-102).');
     } finally {
       if (isAutoCheck && submitBtn) {
         submitBtn.disabled = false;
@@ -619,7 +623,7 @@
         const token = result ? result.token : null;
         const expiresAt = result ? result.expiresAt : null;
         if (typeof token !== 'string' || token === '' || typeof expiresAt !== 'number') {
-          showAuthError('Erreur de connexion, réessaie.');
+          showAuthError('Erreur inattendue, réessaie (code RDV-901).');
           return;
         }
 
@@ -630,18 +634,22 @@
       }
 
       if (response.status === 401) {
-        showAuthError('Secret invalide.');
+        showAuthError('Secret invalide (code RDV-401).');
         return;
       }
 
       if (response.status === 429) {
-        showAuthError('Trop d\'essais, réessaie dans quelques minutes.');
+        showAuthError('Trop d\'essais, réessaie dans quelques minutes (code RDV-402).');
         return;
       }
 
-      showAuthError('Erreur de connexion, réessaie.');
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {}
+      showAuthError(_securityErrorText(data));
     } catch (_) {
-      showAuthError('Erreur de connexion, réessaie.');
+      showAuthError('Impossible de joindre le serveur. Vérifie ta connexion et réessaie (code RDV-102).');
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -722,7 +730,13 @@
     if (serverError.indexOf(data.code) !== -1) {
       return serverError;
     }
-    return serverError + ' (code ' + data.code + ')';
+    const trimmed = serverError.replace(/\s+$/, '');
+    const last = trimmed.charAt(trimmed.length - 1);
+    if (last === '…' || last === '?' || last === '!') {
+      return serverError + ' (code ' + data.code + ')';
+    }
+    const base = last === '.' ? trimmed.slice(0, -1) : trimmed;
+    return base + ' (code ' + data.code + ').';
   }
 
   function _b64urlToBuffer(value) {
