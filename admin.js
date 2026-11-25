@@ -493,7 +493,7 @@
 
       const errorEl = document.getElementById('admin-detail-action-error');
       if (errorEl) {
-        errorEl.textContent = (data && data.error) ? data.error : 'Erreur inattendue, réessaie (code RDV-901).';
+        errorEl.textContent = _securityErrorText(data);
         errorEl.style.display = 'block';
       }
     } catch (_) {
